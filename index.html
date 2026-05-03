@@ -151,9 +151,10 @@
   <div id="writingBar"></div>
 </div>
 
+<!-- PRESSETS (FIXED ORDER) -->
 <div>
-  <button onclick="selectSession(60,10)">60 + 10</button>
   <button onclick="selectSession(50,5)">50 + 5</button>
+  <button onclick="selectSession(60,10)">60 + 10</button>
   <button onclick="selectSession(90,10)">90 + 10</button>
 </div>
 
@@ -185,7 +186,7 @@ let remaining=0;
 
 let phase="reading";
 
-// flash flags
+// flash system
 let fiveDone=false;
 let twoDone=false;
 let oneDone=false;
@@ -194,21 +195,20 @@ let flashLoop=null;
 
 function toSec(m){return Math.round(parseFloat(m||0)*60);}
 
-/* SET */
-function selectSession(r,w){
-  readingDuration=toSec(r);
-  writingDuration=toSec(w);
-  totalDuration=readingDuration+writingDuration;
+/* FIXED: writing first, reading second */
+function selectSession(w, r){
+  writingDuration = toSec(w);
+  readingDuration = toSec(r);
+  totalDuration = readingDuration + writingDuration;
 
-  readingTime.textContent=format(readingDuration);
-  writingTime.textContent=format(writingDuration);
+  readingTime.textContent = format(readingDuration);
+  writingTime.textContent = format(writingDuration);
 
   setupBar();
 }
 
-/* CUSTOM */
 function applyCustom(){
-  selectSession(readInput.value, writeInput.value);
+  selectSession(writeInput.value, readInput.value);
 }
 
 /* BAR */
@@ -217,7 +217,7 @@ function setupBar(){
   writingBar.style.width=(writingDuration/totalDuration)*100+"%";
 }
 
-/* START/PAUSE */
+/* BUTTON */
 function startPauseButton(){
   if(!running){
     startTimer();
@@ -273,7 +273,6 @@ function stopTimer(){
   mainTimer.textContent="00:00";
 }
 
-/* RESET FLAGS */
 function resetFlags(){
   fiveDone=false;
   twoDone=false;
@@ -286,7 +285,6 @@ function update(){
   let left=Math.max(0,Math.floor((endTime-Date.now())/1000));
   mainTimer.textContent=format(left);
 
-  /* PHASE SWITCH */
   if(phase==="reading"){
 
     readingBar.style.width=(left/readingDuration)*100+"%";
@@ -295,8 +293,7 @@ function update(){
       phase="writing";
       endTime=Date.now()+writingDuration*1000;
 
-      flashOnce(); // reading ends flash
-      burstFlash(3); // REQUIRED FIX
+      burstFlash(3); // reading ends
     }
 
   } else {
