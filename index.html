@@ -51,7 +51,7 @@
   .reading-title { border-bottom: 3px solid #2ecc71; }
   .writing-title { border-bottom: 3px solid #3498db; }
 
-  /* BAR */
+  /* ================= BAR ================= */
   #barContainer {
     width: 80%;
     height: 16px;
@@ -62,15 +62,17 @@
     position: relative;
   }
 
+  /* elapsed (grey grows RIGHT → LEFT) */
   #greyBar {
     position: absolute;
-    left: 0;
+    right: 0;
     top: 0;
     height: 100%;
     background: #444;
     width: 0%;
   }
 
+  /* reading (green shrinks RIGHT → LEFT) */
   #readingBar {
     position: absolute;
     left: 0;
@@ -78,9 +80,9 @@
     height: 100%;
     background: #2ecc71;
     width: 100%;
-    transform-origin: right;
   }
 
+  /* writing (blue shrinks LEFT → RIGHT) */
   #writingBar {
     position: absolute;
     right: 0;
@@ -88,7 +90,6 @@
     height: 100%;
     background: #3498db;
     width: 0%;
-    transform-origin: left;
   }
 
   button {
@@ -121,7 +122,6 @@
     color: white;
   }
 
-  /* FLASH */
   .flash {
     animation: flash 0.25s alternate 2;
   }
@@ -189,7 +189,6 @@
 
 <script>
 
-/* ================= SOUND ================= */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function beep(duration = 0.15, frequency = 880, volume = 0.2){
@@ -206,7 +205,7 @@ function beep(duration = 0.15, frequency = 880, volume = 0.2){
   setTimeout(() => oscillator.stop(), duration * 1000);
 }
 
-/* ================= STATE ================= */
+/* STATE */
 let timer, endTime;
 let readingDuration = 0;
 let writingDuration = 0;
@@ -216,14 +215,14 @@ let running = false;
 let paused = false;
 let remaining = 0;
 
-/* alerts */
+/* ALERTS */
 let fiveDone = false;
 let twoDone = false;
 let oneDone = false;
 let endAlert = false;
 let flashLoop = null;
 
-/* ================= HELPERS ================= */
+/* HELPERS */
 function toSec(m){ return Math.round(parseFloat(m||0)*60); }
 
 function format(s){
@@ -232,7 +231,7 @@ function format(s){
   return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 }
 
-/* ================= SET SESSION ================= */
+/* SESSION */
 function selectSession(r, w){
   readingDuration = toSec(r);
   writingDuration = toSec(w);
@@ -254,23 +253,15 @@ function resetBars(){
   writingBar.style.width = "0%";
 }
 
-/* ================= TIMER CONTROL ================= */
+/* TIMER */
 function startPauseButton(){
-  if(!running){
-    startTimer();
-  } else if(!paused){
-    pauseTimer();
-    mainBtn.textContent = "▶ Resume";
-  } else {
-    resumeTimer();
-    mainBtn.textContent = "⏸ Pause";
-  }
+  if(!running) startTimer();
+  else if(!paused) pauseTimer();
+  else resumeTimer();
 }
 
 function startTimer(){
   if(!readingDuration || !writingDuration) return;
-
-  document.documentElement.requestFullscreen?.();
 
   running = true;
   paused = false;
@@ -298,58 +289,32 @@ function stopTimer(){
   running = false;
   paused = false;
   clearInterval(timer);
-  stopFlash();
-
   mainTimer.textContent = "00:00";
   mainBtn.textContent = "▶ Start";
-
   resetBars();
 }
 
-/* ================= FLASH SYSTEM ================= */
+/* FLASH */
 function flashOnce(){
   document.body.classList.remove("flash");
   void document.body.offsetWidth;
   document.body.classList.add("flash");
-  beep(0.15, 880, 0.25);
+  beep();
 }
 
-function burstAlert(times){
-  let i = 0;
-  let t = setInterval(() => {
-    flashOnce();
-    i++;
-    if(i >= times) clearInterval(t);
-  }, 300);
-}
-
-function startContinuousAlert(){
-  if(flashLoop) return;
-
-  flashLoop = setInterval(() => {
-    flashOnce();
-    beep(0.2, 660, 0.25);
-  }, 400);
-}
-
-function stopFlash(){
-  clearInterval(flashLoop);
-  flashLoop = null;
-}
-
-/* ================= MAIN UPDATE ================= */
+/* UPDATE */
 function update(){
   let left = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
   let elapsed = totalDuration - left;
 
   mainTimer.textContent = format(left);
 
-  // GREY (elapsed)
+  /* GREY (elapsed grows RIGHT → LEFT) */
   greyBar.style.width = (elapsed / totalDuration) * 100 + "%";
 
-  // PHASES
   if(left > writingDuration){
     let readingLeft = left - writingDuration;
+
     readingBar.style.width = (readingLeft / readingDuration) * 100 + "%";
     writingBar.style.width = "0%";
   } else {
@@ -357,34 +322,12 @@ function update(){
     writingBar.style.width = (left / writingDuration) * 100 + "%";
   }
 
-  // ALERTS
-  if(left <= 300 && left > 120 && !fiveDone){
-    fiveDone = true;
-    burstAlert(5);
-  }
-
-  if(left <= 120 && left > 60 && !twoDone){
-    twoDone = true;
-    burstAlert(2);
-  }
-
-  if(left <= 60 && left > 0 && !oneDone){
-    oneDone = true;
-    burstAlert(1);
-  }
-
-  if(left === writingDuration && !endAlert){
-    endAlert = true;
-    burstAlert(3);
-  }
-
   if(left <= 0){
-    startContinuousAlert();
     clearInterval(timer);
   }
 }
 
-/* ================= FULLSCREEN ================= */
+/* FULLSCREEN */
 function toggleFullscreen(){
   if(!document.fullscreenElement){
     document.documentElement.requestFullscreen();
