@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Exam Timer</title>
+<title>VCE Exam Timer Final</title>
 <style>
   body {
     margin: 0;
@@ -35,9 +35,9 @@
 
   .timer {
     font-size: 140px;
-    font-weight: 600;
+    font-weight: 700;
     margin: 0;
-    letter-spacing: -2px;
+    font-family: monospace; /* Font style reverted as requested */
   }
 
   .container {
@@ -82,7 +82,7 @@
     padding-bottom: 2px;
   }
 
-  /* THE PROGRESS BAR SYSTEM */
+  /* BAR SYSTEM */
   #barContainer {
     width: 85%;
     height: 40px;
@@ -99,7 +99,7 @@
     height: 100%;
     background: #3498db;
     width: 100%;
-    left: 0; /* Pinned left: shrinks Left-to-Right */
+    left: 0; /* Shrinks Left-to-Right */
     z-index: 1;
   }
 
@@ -108,7 +108,7 @@
     height: 100%;
     background: #2ecc71;
     width: 100%;
-    right: 0; /* Pinned right: shrinks Right-to-Left */
+    right: 0; /* Shrinks Right-to-Left */
     z-index: 2;
   }
 
