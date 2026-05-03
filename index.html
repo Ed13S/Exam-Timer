@@ -9,137 +9,186 @@
     font-family: Arial, sans-serif;
     background: #111;
     color: #fff;
-    text-align: center;
     margin: 0;
+    text-align: center;
   }
 
   /* TOP BAR */
   #topbar {
     display: flex;
     justify-content: space-between;
-    padding: 10px 20px;
+    padding: 14px 24px;
     font-size: 14px;
     opacity: 0.9;
   }
 
-  #lock {
+  #lock img {
+    width: 20px;
+    height: 20px;
     cursor: pointer;
-    user-select: none;
   }
+
+  h1 { margin: 10px 0; }
 
   /* TIMER */
   .timer {
-    font-size: 70px;
+    font-size: 75px;
     margin: 10px 0;
   }
 
+  /* BOXES */
   .container {
     display: flex;
     justify-content: center;
-    gap: 40px;
-    margin: 20px;
+    gap: 80px;
+    margin: 25px 0;
   }
 
   .box {
-    border: 2px solid #fff;
-    padding: 20px;
-    width: 200px;
-    border-radius: 10px;
+    border: 2px solid #333;
+    padding: 25px;
+    width: 240px;
+    border-radius: 12px;
+    background: #161616;
   }
 
-  .active {
-    background: #2ecc71;
-    color: #000;
+  .active-reading { background: #1e3a2a; border-color: #2ecc71; }
+  .active-writing { background: #1a2b3a; border-color: #3498db; }
+
+  /* UNDERLINES */
+  .reading-title {
+    display: inline-block;
+    border-bottom: 3px solid #2ecc71;
+    padding-bottom: 3px;
   }
 
-  button {
-    margin: 6px;
-    padding: 10px 16px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    background: #3498db;
-    color: white;
+  .writing-title {
+    display: inline-block;
+    border-bottom: 3px solid #3498db;
+    padding-bottom: 3px;
   }
 
-  .play { background: #2ecc71; color: black; }
-  .control { background: #e74c3c; }
-
-  input {
-    padding: 8px;
-    width: 110px;
-    border-radius: 6px;
-    border: none;
-    text-align: center;
-  }
-
-  /* PROGRESS BAR */
+  /* SPLIT BAR */
   #barContainer {
-    width: 80%;
-    height: 10px;
-    background: #333;
-    margin: 10px auto;
-    border-radius: 5px;
+    width: 75%;
+    height: 14px;
+    margin: 20px auto;
+    background: #222;
+    border-radius: 8px;
     overflow: hidden;
+    display: flex;
   }
 
-  #bar {
-    height: 100%;
-    width: 100%;
+  #readingBar {
     background: #2ecc71;
+    height: 100%;
+    width: 50%;
     transition: width 0.2s linear;
   }
 
+  #writingBar {
+    background: #3498db;
+    height: 100%;
+    width: 50%;
+    transition: width 0.2s linear;
+  }
+
+  /* BUTTONS */
+  button {
+    margin: 8px;
+    padding: 14px 20px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    background: #3498db;
+    color: white;
+    min-width: 120px;
+  }
+
+  .play { background: #2ecc71; color: black; }
+
+  /* INPUT LAYOUT */
+  .input-grid {
+    display: flex;
+    justify-content: center;
+    gap: 140px;
+    margin-top: 40px;
+  }
+
+  .input-box h3 {
+    margin: 0 0 8px;
+    font-size: 15px;
+  }
+
+  input {
+    padding: 14px;
+    width: 140px;
+    font-size: 16px;
+    text-align: center;
+    border-radius: 8px;
+    border: none;
+    background: #222;
+    color: white;
+  }
+
+  .apply-btn {
+    margin-top: 25px;
+    padding: 12px 22px;
+    background: #555;
+    color: white;
+    border: none;
+    border-radius: 8px;
+  }
+
   /* WARNING */
-  .warn {
-    color: red;
+  #warn {
     font-size: 22px;
+    color: red;
+    height: 30px;
     animation: flash 0.8s infinite;
   }
 
   @keyframes flash {
-    0% { opacity: 1; }
-    50% { opacity: 0.2; }
-    100% { opacity: 1; }
-  }
-
-  .input-grid {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
+    0% {opacity: 1;}
+    50% {opacity: 0.2;}
+    100% {opacity: 1;}
   }
 </style>
 </head>
 
 <body>
 
-<!-- TOP BAR -->
+<!-- TOP -->
 <div id="topbar">
   <div>👤 Eddie Singh</div>
-  <div id="lock" onclick="toggleFullscreen()">🔒</div>
+  <div id="lock" onclick="toggleFullscreen()">
+    <img src="https://p7.hiclipart.com/preview/23/137/277/padlock-computer-icons-door-padlock.jpg">
+  </div>
 </div>
 
 <h1>Exam Timer</h1>
 
 <div class="container">
   <div id="readingBox" class="box">
-    <h2>Reading</h2>
+    <h2><span class="reading-title">Reading</span></h2>
     <p id="readingTime">00:00</p>
   </div>
 
   <div id="writingBox" class="box">
-    <h2>Writing</h2>
+    <h2><span class="writing-title">Writing</span></h2>
     <p id="writingTime">00:00</p>
   </div>
 </div>
 
-<div id="warn" class="warn"></div>
+<div id="warn"></div>
 
 <div class="timer" id="mainTimer">00:00</div>
 
-<!-- PROGRESS BAR -->
+<!-- SPLIT BAR -->
 <div id="barContainer">
-  <div id="bar"></div>
+  <div id="readingBar"></div>
+  <div id="writingBar"></div>
 </div>
 
 <!-- PRESETS -->
@@ -151,30 +200,23 @@
 
 <button class="play" onclick="startTimer()">▶ Start</button>
 
-<!-- CUSTOM -->
+<!-- INPUTS -->
 <div class="input-grid">
-  <div>
-    <h3>Reading</h3>
+  <div class="input-box">
+    <h3>Reading (min)</h3>
     <input id="readInput" type="number" step="0.1">
   </div>
-  <div>
-    <h3>Writing</h3>
+
+  <div class="input-box">
+    <h3>Writing (min)</h3>
     <input id="writeInput" type="number" step="0.1">
   </div>
 </div>
 
-<button onclick="applyCustom()">Apply</button>
-
-<br>
-
-<button class="control" onclick="stopTimer()">Stop</button>
-
-<audio id="beep">
-  <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg">
-</audio>
+<button class="apply-btn" onclick="applyCustom()">Apply</button>
 
 <script>
-let timer, endTime, paused=false, remaining;
+let timer, endTime;
 let phase="reading";
 let readingDuration=0, writingDuration=0;
 let prevLeft=null;
@@ -185,6 +227,7 @@ function selectSession(w,r){
   writingDuration=toSec(w);
   readingDuration=toSec(r);
   updateDisplay();
+  setupBar();
 }
 
 function applyCustom(){
@@ -195,6 +238,11 @@ function updateDisplay(){
   writingTime.textContent=format(writingDuration);
   readingTime.textContent=format(readingDuration);
   mainTimer.textContent=format(readingDuration);
+}
+
+function setupBar(){
+  readingBar.style.width="50%";
+  writingBar.style.width="50%";
 }
 
 function startTimer(){
@@ -209,49 +257,34 @@ function startTimer(){
 function startPhase(sec){
   endTime=Date.now()+sec*1000;
   prevLeft=null;
-  warnShown=false;
-  document.getElementById("warn").textContent="";
   timer=setInterval(update,200);
 }
 
-let warnShown=false;
-
 function update(){
-  if(paused)return;
-
   let left=Math.max(0,Math.floor((endTime-Date.now())/1000));
-
-  // 🔴 2-minute flashing warning
-  if(left<=120){
-    document.getElementById("warn").textContent="⚠ LAST 2 MINUTES";
-  } else {
-    document.getElementById("warn").textContent="";
-  }
-
-  // progress bar
-  let total = phase==="reading"?readingDuration:writingDuration;
-  let pct = (left/total)*100;
-  bar.style.width = pct + "%";
 
   mainTimer.textContent=format(left);
 
-  if(prevLeft!==null && prevLeft>300 && left<=300){
-    beep();
+  let total = phase==="reading"?readingDuration:writingDuration;
+  let ratio = left/total;
+
+  if(phase==="reading"){
+    readingBar.style.width = (ratio*100) + "%";
+    writingBar.style.width = "50%";
+  } else {
+    writingBar.style.width = (ratio*100) + "%";
+    readingBar.style.width = "0%";
   }
 
   if(left<=0){
-    beep();
-
     if(phase==="reading"){
       phase="writing";
       startPhase(writingDuration);
     } else {
       clearInterval(timer);
-      document.getElementById("warn").textContent="DONE";
+      warn.textContent="DONE";
     }
   }
-
-  prevLeft=left;
 }
 
 function toggleFullscreen(){
@@ -262,17 +295,9 @@ function toggleFullscreen(){
   }
 }
 
-function stopTimer(){
-  clearInterval(timer);
-}
-
 function format(s){
   let m=Math.floor(s/60), sec=s%60;
   return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-}
-
-function beep(){
-  document.getElementById("beep").play();
 }
 </script>
 
