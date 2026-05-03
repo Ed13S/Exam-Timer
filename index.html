@@ -151,7 +151,7 @@
   <div id="writingBar"></div>
 </div>
 
-<!-- PRESSETS (FIXED ORDER) -->
+<!-- PRESETS -->
 <div>
   <button onclick="selectSession(50,5)">50 + 5</button>
   <button onclick="selectSession(60,10)">60 + 10</button>
@@ -186,16 +186,15 @@ let remaining=0;
 
 let phase="reading";
 
-// flash system
+// flash flags
 let fiveDone=false;
 let twoDone=false;
 let oneDone=false;
-let readingEndDone=false;
 let flashLoop=null;
 
 function toSec(m){return Math.round(parseFloat(m||0)*60);}
 
-/* FIXED: writing first, reading second */
+/* FIXED PRESETS */
 function selectSession(w, r){
   writingDuration = toSec(w);
   readingDuration = toSec(r);
@@ -203,26 +202,20 @@ function selectSession(w, r){
 
   readingTime.textContent = format(readingDuration);
   writingTime.textContent = format(writingDuration);
-
-  setupBar();
 }
 
+/* CUSTOM */
 function applyCustom(){
   selectSession(writeInput.value, readInput.value);
 }
 
-/* BAR */
-function setupBar(){
-  readingBar.style.width=(readingDuration/totalDuration)*100+"%";
-  writingBar.style.width=(writingDuration/totalDuration)*100+"%";
-}
-
-/* BUTTON */
+/* START / PAUSE */
 function startPauseButton(){
   if(!running){
     startTimer();
     return;
   }
+
   if(!paused){
     pauseTimer();
     mainBtn.textContent="▶ Resume";
@@ -277,7 +270,6 @@ function resetFlags(){
   fiveDone=false;
   twoDone=false;
   oneDone=false;
-  readingEndDone=false;
 }
 
 /* UPDATE */
@@ -285,20 +277,23 @@ function update(){
   let left=Math.max(0,Math.floor((endTime-Date.now())/1000));
   mainTimer.textContent=format(left);
 
+  /* BAR FIX (REQUESTED BEHAVIOUR) */
   if(phase==="reading"){
 
-    readingBar.style.width=(left/readingDuration)*100+"%";
+    readingBar.style.width = (left / readingDuration) * 100 + "%";
+    writingBar.style.width = "0%";
 
     if(left<=0){
       phase="writing";
       endTime=Date.now()+writingDuration*1000;
 
-      burstFlash(3); // reading ends
+      burstFlash(3);
     }
 
   } else {
 
-    writingBar.style.width=(left/writingDuration)*100+"%";
+    readingBar.style.width = "0%";
+    writingBar.style.width = (left / writingDuration) * 100 + "%";
 
     if(left<=0){
       startContinuousFlash();
@@ -358,6 +353,14 @@ function toggleFullscreen(){
     document.exitFullscreen();
   }
 }
+
+/* SPACEBAR FIX */
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space") {
+    e.preventDefault();
+    startPauseButton();
+  }
+});
 
 /* FORMAT */
 function format(s){
