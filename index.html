@@ -46,19 +46,14 @@
       color: white;
     }
 
+    .play { background: #2ecc71; color: black; }
     .control { background: #e74c3c; }
     .secondary { background: #555; }
-
-    /* ✅ INPUTS FIXED HERE */
-    .inputs {
-      margin-top: 20px;
-    }
 
     input {
       padding: 10px;
       margin: 5px;
       width: 100px;
-      font-size: 16px;
       text-align: center;
       border-radius: 6px;
       border: none;
@@ -85,23 +80,23 @@
 
   <!-- PRESETS -->
   <div>
-    <button onclick="startSession(60,10)">60 + 10</button>
-    <button onclick="startSession(50,5)">50 + 5</button>
-    <button onclick="startSession(90,10)">90 + 10</button>
+    <button onclick="selectSession(60,10)">60 + 10</button>
+    <button onclick="selectSession(50,5)">50 + 5</button>
+    <button onclick="selectSession(90,10)">90 + 10</button>
   </div>
 
-  <!-- ✅ INPUT BOXES (VISIBLE) -->
-  <div class="inputs">
-    <h3>Custom Time</h3>
-    <div>
-      Writing (min):
-      <input id="writeInput" type="number" min="1" placeholder="e.g. 60">
-    </div>
-    <div>
-      Reading (min):
-      <input id="readInput" type="number" min="1" placeholder="e.g. 10">
-    </div>
-    <button onclick="startCustom()">Start Custom</button>
+  <!-- ✅ ONE PLAY BUTTON -->
+  <div>
+    <button class="play" onclick="startTimer()">▶ Start</button>
+  </div>
+
+  <!-- CUSTOM INPUTS (NO SEPARATE BUTTON) -->
+  <div>
+    <h3>Custom</h3>
+    Writing: <input id="writeInput" type="number" min="1">
+    Reading: <input id="readInput" type="number" min="1">
+    <br>
+    <button onclick="applyCustom()">Apply Custom</button>
   </div>
 
   <!-- CONTROLS -->
@@ -125,29 +120,39 @@
     let writingDuration = 0;
     let warned = false;
 
-    function startSession(writeMin, readMin) {
-      clearInterval(timer);
-
+    function selectSession(writeMin, readMin) {
       writingDuration = writeMin * 60;
       readingDuration = readMin * 60;
-
-      document.getElementById("writingTime").textContent = format(writingDuration);
-      document.getElementById("readingTime").textContent = format(readingDuration);
-
-      phase = "reading";
-      startPhase(readingDuration);
+      updateDisplay();
     }
 
-    function startCustom() {
-      const w = parseInt(document.getElementById("writeInput").value);
-      const r = parseInt(document.getElementById("readInput").value);
+    function applyCustom() {
+      const w = parseInt(writeInput.value);
+      const r = parseInt(readInput.value);
 
       if (!w || !r || w <= 0 || r <= 0) {
         alert("Enter valid times");
         return;
       }
 
-      startSession(w, r);
+      selectSession(w, r);
+    }
+
+    function updateDisplay() {
+      document.getElementById("writingTime").textContent = format(writingDuration);
+      document.getElementById("readingTime").textContent = format(readingDuration);
+      document.getElementById("mainTimer").textContent = format(readingDuration);
+    }
+
+    function startTimer() {
+      if (!readingDuration || !writingDuration) {
+        alert("Select a preset or apply custom time first");
+        return;
+      }
+
+      clearInterval(timer);
+      phase = "reading";
+      startPhase(readingDuration);
     }
 
     function startPhase(seconds) {
@@ -156,7 +161,6 @@
       endTime = Date.now() + seconds * 1000;
 
       updateUI();
-
       timer = setInterval(update, 200);
     }
 
