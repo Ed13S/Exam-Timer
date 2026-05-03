@@ -5,319 +5,270 @@
 <title>Exam Timer</title>
 
 <style>
-  body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #111;
-    color: #fff;
-    text-align: center;
-  }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0f0f0f;
+  color: white;
+  overflow: hidden;
+}
 
-  #topbar {
-    display: flex;
-    justify-content: space-between;
-    padding: 14px 24px;
-    font-size: 14px;
-  }
+/* ================= FLOATING WIDGET ================= */
+#widget {
+  position: fixed;
+  top: 80px;
+  left: 80px;
+  width: 320px;
+  background: #151515;
+  border: 1px solid #333;
+  border-radius: 14px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  user-select: none;
+  z-index: 9999;
+}
 
-  #lock img {
-    width: 30px;
-    height: 30px;
-    cursor: pointer;
-  }
+/* drag header */
+#header {
+  background: #1c1c1c;
+  padding: 10px;
+  cursor: grab;
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+}
 
-  h1 { margin: 10px 0; }
+#header:active { cursor: grabbing; }
 
-  .timer {
-    font-size: 76px;
-    margin: 10px 0 20px;
-  }
+/* timer */
+#time {
+  font-size: 42px;
+  text-align: center;
+  margin: 10px 0;
+}
 
-  .container {
-    display: flex;
-    justify-content: center;
-    gap: 80px;
-    margin: 25px 0;
-  }
+/* BAR */
+#barContainer {
+  height: 10px;
+  background: #222;
+  margin: 10px;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
 
-  .box {
-    border: 2px solid #333;
-    padding: 25px;
-    width: 240px;
-    border-radius: 12px;
-    background: #161616;
-  }
+#greyBar {
+  position: absolute;
+  height: 100%;
+  left: 0;
+  background: #444;
+  width: 0%;
+}
 
-  .reading-title { border-bottom: 3px solid #2ecc71; }
-  .writing-title { border-bottom: 3px solid #3498db; }
+#readingBar {
+  position: absolute;
+  height: 100%;
+  left: 0;
+  background: #2ecc71;
+  width: 100%;
+  transform-origin: right;
+}
 
-  /* ================= BAR ================= */
-  #barContainer {
-    width: 80%;
-    height: 16px;
-    margin: 20px auto;
-    background: #222; /* base = remaining background */
-    border-radius: 8px;
-    overflow: hidden;
-    position: relative;
-  }
+#writingBar {
+  position: absolute;
+  height: 100%;
+  right: 0;
+  background: #3498db;
+  width: 0%;
+  transform-origin: left;
+}
 
-  /* grey = elapsed time */
-  #greyBar {
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    background: #444;
-    width: 0%;
-    z-index: 1;
-  }
+/* buttons */
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+}
 
-  /* reading (green) */
-  #readingBar {
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    background: #2ecc71;
-    width: 100%;
-    transform-origin: right;
-    z-index: 3;
-  }
+button {
+  border: none;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
 
-  /* writing (blue) */
-  #writingBar {
-    position: absolute;
-    right: 0;
-    top: 0;
-    height: 100%;
-    background: #3498db;
-    width: 0%;
-    transform-origin: left;
-    z-index: 4;
-  }
+.start { background: #2ecc71; }
+.stop { background: #e74c3c; color: white; }
 
-  button {
-    margin: 8px;
-    padding: 14px 22px;
-    font-size: 16px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-  }
+/* flash */
+.flash {
+  animation: flash 0.25s alternate 2;
+}
 
-  .play { background: #2ecc71; color: black; }
-  .stop { background: #e74c3c; color: white; }
+@keyframes flash {
+  0% { background: #151515; }
+  100% { background: #8b0000; }
+}
 
-  .input-grid {
-    display: flex;
-    justify-content: center;
-    gap: 140px;
-    margin-top: 40px;
-  }
-
-  input {
-    padding: 14px;
-    width: 140px;
-    font-size: 16px;
-    border-radius: 8px;
-    border: none;
-    text-align: center;
-    background: #222;
-    color: white;
-  }
-
-  .flash {
-    animation: flash 0.25s alternate 2;
-  }
-
-  @keyframes flash {
-    0% { background: #111; }
-    100% { background: #8b0000; }
-  }
 </style>
 </head>
 
 <body>
 
-<div id="topbar">
-  <div>Eddie Singh</div>
-  <div id="lock" onclick="toggleFullscreen()">
-    <img src="https://w0.peakpx.com/wallpaper/488/103/HD-wallpaper-locked-black-dont-edge-galaxy-lock-logo-phone-sad-white.jpg">
-  </div>
-</div>
+<div id="widget">
 
-<h1>Exam Timer</h1>
-
-<div class="container">
-  <div class="box">
-    <h2><span class="reading-title">Reading</span></h2>
-    <p id="readingTime">00:00</p>
+  <div id="header">
+    <div>Exam Timer</div>
+    <div onclick="toggleFullscreen()">⛶</div>
   </div>
 
-  <div class="box">
-    <h2><span class="writing-title">Writing</span></h2>
-    <p id="writingTime">00:00</p>
-  </div>
-</div>
+  <div id="time">00:00</div>
 
-<div class="timer" id="mainTimer">00:00</div>
-
-<!-- BAR -->
-<div id="barContainer">
-  <div id="greyBar"></div>
-  <div id="readingBar"></div>
-  <div id="writingBar"></div>
-</div>
-
-<!-- PRESETS -->
-<div>
-  <button onclick="selectSession(60,10)">60 + 10</button>
-  <button onclick="selectSession(50,5)">50 + 5</button>
-  <button onclick="selectSession(90,10)">90 + 10</button>
-</div>
-
-<button class="play" id="mainBtn" onclick="startPauseButton()">▶ Start</button>
-<button class="stop" onclick="stopTimer()">Stop</button>
-
-<div class="input-grid">
-  <div>
-    <h3>Reading (min)</h3>
-    <input id="readInput" type="number">
+  <div id="barContainer">
+    <div id="greyBar"></div>
+    <div id="readingBar"></div>
+    <div id="writingBar"></div>
   </div>
 
-  <div>
-    <h3>Writing (min)</h3>
-    <input id="writeInput" type="number">
+  <div class="controls">
+    <button class="start" onclick="startTimer()">Start</button>
+    <button class="stop" onclick="stopTimer()">Stop</button>
   </div>
-</div>
 
-<button onclick="applyCustom()">Apply</button>
+</div>
 
 <script>
 
-let timer, endTime;
-let readingDuration = 0;
-let writingDuration = 0;
-let totalDuration = 0;
+/* ================= AUDIO ================= */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-let running = false;
-let paused = false;
-let remaining = 0;
+function beep(duration = 0.15, freq = 880){
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
 
-function toSec(m){ return Math.round(parseFloat(m||0)*60); }
+  o.connect(g);
+  g.connect(audioCtx.destination);
 
-function selectSession(r, w){
-  readingDuration = toSec(r);
-  writingDuration = toSec(w);
-  totalDuration = readingDuration + writingDuration;
+  o.frequency.value = freq;
+  g.gain.value = 0.2;
 
-  readingTime.textContent = format(readingDuration);
-  writingTime.textContent = format(writingDuration);
-
-  resetBars();
+  o.start();
+  setTimeout(() => o.stop(), duration * 1000);
 }
 
-function applyCustom(){
-  selectSession(readInput.value, writeInput.value);
-}
+/* ================= DRAG ================= */
+const widget = document.getElementById("widget");
+const header = document.getElementById("header");
 
-function resetBars(){
-  greyBar.style.width = "0%";
-  readingBar.style.width = "100%";
-  writingBar.style.width = "0%";
-}
+let offsetX, offsetY, dragging = false;
 
-function startPauseButton(){
-  if(!running){
-    startTimer();
-  } else if(!paused){
-    pauseTimer();
-    mainBtn.textContent = "▶ Resume";
-  } else {
-    resumeTimer();
-    mainBtn.textContent = "⏸ Pause";
+header.addEventListener("mousedown", (e)=>{
+  dragging = true;
+  offsetX = e.clientX - widget.offsetLeft;
+  offsetY = e.clientY - widget.offsetTop;
+});
+
+document.addEventListener("mousemove", (e)=>{
+  if(dragging){
+    widget.style.left = (e.clientX - offsetX) + "px";
+    widget.style.top = (e.clientY - offsetY) + "px";
   }
-}
+});
+
+document.addEventListener("mouseup", ()=> dragging = false);
+
+/* ================= TIMER ================= */
+let timer;
+let totalDuration = 100 * 60; // default demo
+let readingDuration = 90 * 60;
+let writingDuration = 10 * 60;
+
+let endTime;
+let running = false;
+
+let fiveDone=false, twoDone=false, oneDone=false;
 
 function startTimer(){
-  if(!readingDuration || !writingDuration) return;
+  if(running) return;
 
-  // ✅ FULLSCREEN START
   document.documentElement.requestFullscreen?.();
 
   running = true;
-  paused = false;
-
   endTime = Date.now() + totalDuration * 1000;
 
-  mainBtn.textContent = "⏸ Pause";
-
-  timer = setInterval(update, 200);
-}
-
-function pauseTimer(){
-  paused = true;
-  clearInterval(timer);
-  remaining = endTime - Date.now();
-}
-
-function resumeTimer(){
-  paused = false;
-  endTime = Date.now() + remaining;
   timer = setInterval(update, 200);
 }
 
 function stopTimer(){
-  running = false;
-  paused = false;
   clearInterval(timer);
-
-  mainTimer.textContent = "00:00";
-  mainBtn.textContent = "▶ Start";
-
-  resetBars();
+  running = false;
 }
 
 function update(){
-  let left = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+  let left = Math.max(0, Math.floor((endTime - Date.now())/1000));
   let elapsed = totalDuration - left;
 
-  mainTimer.textContent = format(left);
+  document.getElementById("time").textContent =
+    `${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;
 
-  // GREY (elapsed grows left → right)
-  greyBar.style.width = (elapsed / totalDuration) * 100 + "%";
+  // grey (elapsed)
+  greyBar.style.width = (elapsed/totalDuration)*100 + "%";
 
-  // READING PHASE
+  // phase split
   if(left > writingDuration){
-    let readingLeft = left - writingDuration;
-    readingBar.style.width = (readingLeft / readingDuration) * 100 + "%";
+    let rLeft = left - writingDuration;
+    readingBar.style.width = (rLeft/readingDuration)*100 + "%";
     writingBar.style.width = "0%";
-  }
-
-  // WRITING PHASE
-  else {
+  } else {
     readingBar.style.width = "0%";
-    writingBar.style.width = (left / writingDuration) * 100 + "%";
+    writingBar.style.width = (left/writingDuration)*100 + "%";
   }
 
-  if(left <= 0){
+  // alerts
+  if(left<=300 && left>120 && !fiveDone){ fiveDone=true; burst(5,880); }
+  if(left<=120 && left>60 && !twoDone){ twoDone=true; burst(2,880); }
+  if(left<=60 && left>0 && !oneDone){ oneDone=true; burst(1,880); }
+
+  if(left<=0){
     clearInterval(timer);
+    continuousAlert();
   }
 }
 
+/* ================= ALERTS ================= */
+let loop;
+
+function flash(){
+  widget.classList.remove("flash");
+  void widget.offsetWidth;
+  widget.classList.add("flash");
+  beep(0.15, 880);
+}
+
+function burst(n){
+  let i=0;
+  let t=setInterval(()=>{
+    flash();
+    i++;
+    if(i>=n) clearInterval(t);
+  },300);
+}
+
+function continuousAlert(){
+  if(loop) return;
+  loop=setInterval(flash, 400);
+}
+
+/* ================= FULLSCREEN ================= */
 function toggleFullscreen(){
   if(!document.fullscreenElement){
     document.documentElement.requestFullscreen();
   } else {
     document.exitFullscreen();
   }
-}
-
-function format(s){
-  let m = Math.floor(s/60);
-  let sec = s % 60;
-  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 }
 
 </script>
