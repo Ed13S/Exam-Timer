@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>TIMER</title>
+<title>VCE Exam Timer Final</title>
 <style>
   body {
     margin: 0;
-    font-family: 'Segoe UI', Arial, sans-serif;
+    font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
     background: #111;
     color: #fff;
     text-align: center;
@@ -23,7 +23,7 @@
     font-size: 14px;
   }
 
-  h1 { margin: 20px 0 10px; font-weight: 400; color: #fff; letter-spacing: 2px; }
+  h1 { margin: 20px 0 10px; font-weight: 500; color: #fff; letter-spacing: 1px; }
 
   .timer-label {
     font-size: 1.2rem;
@@ -34,10 +34,10 @@
   }
 
   .timer {
-    font-size: 130px;
-    font-weight: 700;
-    margin: 5px 0;
-    font-family: 'Courier New', Courier, monospace;
+    font-size: 140px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -2px;
   }
 
   .container {
@@ -60,17 +60,34 @@
     background: #e0e0e0;
     color: #000;
     border-color: #fff;
-    box-shadow: 0 0 20px rgba(255,255,255,0.15);
+    box-shadow: 0 0 25px rgba(255,255,255,0.1);
   }
 
-  .reading-title, .writing-title { font-weight: bold; display: block; margin-bottom: 5px; font-size: 0.9rem; }
+  /* Phase Underlines */
+  .reading-title { 
+    font-weight: bold; 
+    display: inline-block; 
+    margin-bottom: 8px; 
+    font-size: 0.85rem;
+    border-bottom: 3px solid #2ecc71;
+    padding-bottom: 2px;
+  }
+
+  .writing-title { 
+    font-weight: bold; 
+    display: inline-block; 
+    margin-bottom: 8px; 
+    font-size: 0.85rem;
+    border-bottom: 3px solid #3498db;
+    padding-bottom: 2px;
+  }
 
   /* THE PROGRESS BAR SYSTEM */
   #barContainer {
     width: 85%;
     height: 40px;
     margin: 25px auto;
-    background: #333; /* The "Grey" (Time Spent) */
+    background: #333; /* Grey (Time Spent) */
     border-radius: 8px;
     position: relative;
     overflow: hidden;
@@ -82,7 +99,7 @@
     height: 100%;
     background: #3498db;
     width: 100%;
-    left: 0; /* Pinned left: will shrink Left-to-Right */
+    left: 0; /* Pinned left: shrinks Left-to-Right */
     z-index: 1;
   }
 
@@ -91,11 +108,10 @@
     height: 100%;
     background: #2ecc71;
     width: 100%;
-    right: 0; /* Pinned right: will shrink Right-to-Left */
+    right: 0; /* Pinned right: shrinks Right-to-Left */
     z-index: 2;
   }
 
-  /* BUTTONS & CONTROLS */
   button {
     margin: 5px;
     padding: 12px 25px;
@@ -104,18 +120,16 @@
     border: none;
     cursor: pointer;
     font-weight: 600;
-    transition: transform 0.1s;
   }
 
-  button:active { transform: scale(0.96); }
   .play { background: #2ecc71; color: #000; }
   .pause { background: #f1c40f; color: #000; }
   .stop { background: #e74c3c; color: #fff; }
   .alarm-btn { background: #ff4757; color: #fff; animation: pulse 1s infinite; }
 
   @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
   }
 
   input {
@@ -147,15 +161,15 @@
 <div class="container">
   <div id="readBox" class="box">
     <span class="reading-title">READING TIME</span>
-    <div id="readDisplay" style="font-size: 1.8rem;">00:00</div>
+    <div id="readDisplay" style="font-size: 1.8rem; font-weight: 600;">00:00</div>
   </div>
   <div id="writeBox" class="box">
     <span class="writing-title">WRITING TIME</span>
-    <div id="writeDisplay" style="font-size: 1.8rem;">00:00</div>
+    <div id="writeDisplay" style="font-size: 1.8rem; font-weight: 600;">00:00</div>
   </div>
 </div>
 
-<div id="phaseLabel" class="timer-label">STANDBY</div>
+<div id="phaseLabel" class="timer-label">Ready</div>
 <div class="timer" id="mainTimer">00:00</div>
 
 <div id="barContainer">
@@ -178,7 +192,7 @@
 
 <script>
 let rSec = 0, wSec = 0;
-let phase = 'reading'; // 'reading' or 'writing'
+let phase = 'reading'; 
 let timerLeft = 0;
 let interval = null;
 let alarming = false;
@@ -246,7 +260,6 @@ function handlePrimaryAction() {
     stopAlarm();
     return;
   }
-  
   if (!interval) {
     if (document.documentElement.requestFullscreen) {
       document.documentElement.requestFullscreen().catch(() => {});
@@ -275,31 +288,25 @@ function tick() {
     timerLeft--;
     mainTimer.textContent = format(timerLeft);
     
-    // Progress Bar Logic
     if (phase === 'reading') {
-      // Shrink right-to-left
       rBar.style.width = (timerLeft / rSec * 100) + "%";
       wBar.style.width = "100%";
     } else {
-      // Shrink left-to-right (pinned left, width decreases)
       wBar.style.width = (timerLeft / wSec * 100) + "%";
     }
 
-    // Interval Alerts
     if ([300, 120, 60].includes(timerLeft)) {
       document.body.classList.add('flash');
       setTimeout(() => document.body.classList.remove('flash'), 1000);
     }
   } else {
     if (phase === 'reading' && wSec > 0) {
-      // Automatic switch to writing
       phase = 'writing';
       timerLeft = wSec;
       refreshUI();
       mainTimer.textContent = format(timerLeft);
-      // Brief flash to signal transition
       document.body.classList.add('flash');
-      setTimeout(() => document.body.classList.remove('flash'), 500);
+      setTimeout(() => document.body.classList.remove('flash'), 800);
     } else {
       finish();
     }
@@ -311,9 +318,9 @@ function finish() {
   interval = null;
   alarming = true;
   document.body.classList.add('flash');
-  mainBtn.textContent = "🛑 STOP ";
+  mainBtn.textContent = "🛑 STOP ALARM";
   mainBtn.className = "alarm-btn";
-  phaseLabel.textContent = "EXAM COMPLETE";
+  phaseLabel.textContent = "Time Up";
 }
 
 function stopAlarm() {
@@ -327,14 +334,13 @@ function fullReset() {
   interval = null;
   alarming = false;
   document.body.classList.remove('flash');
-  mainBtn.textContent = "▶ START";
+  mainBtn.textContent = "▶ START EXAM";
   mainBtn.className = "play";
   rBar.style.width = "100%";
   wBar.style.width = "100%";
   refreshUI();
 }
 
-// Initial setup
 setSession(10, 90);
 </script>
 </body>
