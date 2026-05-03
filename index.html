@@ -1,128 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Exam Timer</title>
+  <meta charset="UTF-8">
+  <title>Exam Timer</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      text-align: center;
+    }
 
-<style>
-  body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #111;
-    color: #fff;
-    text-align: center;
-  }
+    #topbar {
+      display: flex;
+      justify-content: space-between;
+      padding: 14px 24px;
+      font-size: 14px;
+    }
 
-  #topbar {
-    display: flex;
-    justify-content: space-between;
-    padding: 14px 24px;
-    font-size: 14px;
-  }
+    #lock img {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
 
-  #lock img {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-  }
+    h1 { margin: 10px 0; }
 
-  h1 { margin: 10px 0; }
+    .timer {
+      font-size: 76px;
+      margin: 10px 0 20px;
+    }
 
-  .timer {
-    font-size: 76px;
-    margin: 10px 0 20px;
-  }
+    .container {
+      display: flex;
+      justify-content: center;
+      gap: 80px;
+      margin: 25px 0;
+    }
 
-  .container {
-    display: flex;
-    justify-content: center;
-    gap: 80px;
-    margin: 25px 0;
-  }
+    .box {
+      border: 2px solid #333;
+      padding: 25px;
+      width: 240px;
+      border-radius: 12px;
+      background: #161616;
+    }
 
-  .box {
-    border: 2px solid #333;
-    padding: 25px;
-    width: 240px;
-    border-radius: 12px;
-    background: #161616;
-  }
+    .reading-title {
+      border-bottom: 3px solid #2ecc71;
+      padding-bottom: 3px;
+    }
 
-  .reading-title {
-    border-bottom: 3px solid #2ecc71;
-    padding-bottom: 3px;
-  }
+    .writing-title {
+      border-bottom: 3px solid #3498db;
+      padding-bottom: 3px;
+    }
 
-  .writing-title {
-    border-bottom: 3px solid #3498db;
-    padding-bottom: 3px;
-  }
+    /* BAR */
+    #barContainer {
+      width: 80%;
+      height: 16px;
+      margin: 20px auto;
+      background: #222;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+    }
 
-  #barContainer {
-    width: 80%;
-    height: 16px;
-    margin: 20px auto;
-    background: #222;
-    border-radius: 8px;
-    overflow: hidden;
-    display: flex;
-  }
+    #barFill {
+      height: 100%;
+      transition: width 0.2s linear;
+    }
 
-  #readingBar {
-    background: #2ecc71;
-    height: 100%;
-    transition: width 0.2s linear;
-  }
+    /* BUTTONS */
+    button {
+      margin: 8px;
+      padding: 14px 22px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+    }
 
-  #writingBar {
-    background: #3498db;
-    height: 100%;
-    transition: width 0.2s linear;
-  }
+    .play { background: #2ecc71; color: black; }
+    .stop { background: #e74c3c; color: white; }
 
-  button {
-    margin: 8px;
-    padding: 14px 22px;
-    font-size: 16px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-  }
+    /* INPUTS */
+    .input-grid {
+      display: flex;
+      justify-content: center;
+      gap: 140px;
+      margin-top: 40px;
+    }
 
-  .play { background: #2ecc71; color: black; }
-  .stop { background: #e74c3c; color: white; }
+    input {
+      padding: 14px;
+      width: 140px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      text-align: center;
+      background: #222;
+      color: white;
+    }
 
-  .input-grid {
-    display: flex;
-    justify-content: center;
-    gap: 140px;
-    margin-top: 40px;
-  }
+    /* FLASH */
+    .flash {
+      animation: flash 0.25s alternate 2;
+    }
 
-  input {
-    padding: 14px;
-    width: 140px;
-    font-size: 16px;
-    border-radius: 8px;
-    border: none;
-    text-align: center;
-    background: #222;
-    color: white;
-  }
+    @keyframes flash {
+      0% { background: #111; }
+      100% { background: #8b0000; }
+    }
 
-  .flash {
-    animation: flash 0.25s alternate 2;
-  }
-
-  @keyframes flash {
-    0% { background: #111; }
-    100% { background: #8b0000; }
-  }
-</style>
+  </style>
 </head>
 
 <body>
 
+<!-- TOP -->
 <div id="topbar">
   <div>Eddie Singh</div>
   <div id="lock" onclick="toggleFullscreen()">
@@ -146,21 +144,22 @@
 
 <div class="timer" id="mainTimer">00:00</div>
 
+<!-- BAR -->
 <div id="barContainer">
-  <div id="readingBar"></div>
-  <div id="writingBar"></div>
+  <div id="barFill"></div>
 </div>
 
 <!-- PRESETS -->
 <div>
-  <button onclick="selectSession(50,5)">50 + 5</button>
   <button onclick="selectSession(60,10)">60 + 10</button>
+  <button onclick="selectSession(50,5)">50 + 5</button>
   <button onclick="selectSession(90,10)">90 + 10</button>
 </div>
 
 <button class="play" id="mainBtn" onclick="startPauseButton()">▶ Start</button>
 <button class="stop" onclick="stopTimer()">Stop</button>
 
+<!-- INPUTS -->
 <div class="input-grid">
   <div>
     <h3>Reading (min)</h3>
@@ -178,197 +177,177 @@
 <script>
 
 let timer, endTime;
-let readingDuration=0, writingDuration=0, totalDuration=0;
+let readingDuration = 0, writingDuration = 0, totalDuration = 0;
 
-let running=false;
-let paused=false;
-let remaining=0;
+let running = false;
+let paused = false;
+let remaining = 0;
 
-let phase="reading";
+// alerts
+let fiveDone = false;
+let twoDone = false;
+let oneDone = false;
+let flashLoop = null;
 
-// flash flags
-let fiveDone=false;
-let twoDone=false;
-let oneDone=false;
-let flashLoop=null;
+function toSec(m) { return Math.round(parseFloat(m || 0) * 60); }
 
-function toSec(m){return Math.round(parseFloat(m||0)*60);}
-
-/* FIXED PRESETS */
-function selectSession(w, r){
-  writingDuration = toSec(w);
+/* SET */
+function selectSession(r, w) {
   readingDuration = toSec(r);
+  writingDuration = toSec(w);
   totalDuration = readingDuration + writingDuration;
 
   readingTime.textContent = format(readingDuration);
   writingTime.textContent = format(writingDuration);
+
+  setupBar();
 }
 
-/* CUSTOM */
-function applyCustom(){
-  selectSession(writeInput.value, readInput.value);
+function applyCustom() {
+  selectSession(readInput.value, writeInput.value);
 }
 
-/* START / PAUSE */
-function startPauseButton(){
-  if(!running){
+/* BAR */
+function setupBar() {
+  // Full green (for reading), and blue for writing
+  barFill.style.background = `linear-gradient(to left, #2ecc71 0%, #2ecc71 100%)`; 
+}
+
+/* BUTTON */
+function startPauseButton() {
+  if (!running) {
     startTimer();
     return;
   }
-
-  if(!paused){
+  if (!paused) {
     pauseTimer();
-    mainBtn.textContent="▶ Resume";
+    mainBtn.textContent = "▶ Resume";
   } else {
     resumeTimer();
-    mainBtn.textContent="⏸ Pause";
+    mainBtn.textContent = "⏸ Pause";
   }
 }
 
-function startTimer(){
-  if(!readingDuration||!writingDuration)return;
+function startTimer() {
+  if (!readingDuration || !writingDuration) return;
 
   document.documentElement.requestFullscreen?.();
 
-  running=true;
-  paused=false;
-  phase="reading";
+  running = true;
+  paused = false;
 
-  endTime=Date.now()+readingDuration*1000;
+  endTime = Date.now() + totalDuration * 1000;
 
-  resetFlags();
+  fiveDone = false;
+  twoDone = false;
+  oneDone = false;
 
-  mainBtn.textContent="⏸ Pause";
+  mainBtn.textContent = "⏸ Pause";
 
-  timer=setInterval(update,200);
+  timer = setInterval(update, 200);
 }
 
-function pauseTimer(){
-  paused=true;
+function pauseTimer() {
+  paused = true;
   clearInterval(timer);
-  remaining=endTime-Date.now();
+  remaining = endTime - Date.now();
 }
 
-function resumeTimer(){
-  paused=false;
-  endTime=Date.now()+remaining;
-  timer=setInterval(update,200);
+function resumeTimer() {
+  paused = false;
+  endTime = Date.now() + remaining;
+  timer = setInterval(update, 200);
 }
 
-function stopTimer(){
-  running=false;
-  paused=false;
+function stopTimer() {
+  running = false;
+  paused = false;
 
   clearInterval(timer);
   stopFlash();
 
-  mainBtn.textContent="▶ Start";
-  mainTimer.textContent="00:00";
+  mainBtn.textContent = "▶ Start";
+
+  mainTimer.textContent = "00:00";
 }
 
-function resetFlags(){
-  fiveDone=false;
-  twoDone=false;
-  oneDone=false;
-}
+/* UPDATE (FIXED CORE LOGIC) */
+function update() {
+  let left = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+  mainTimer.textContent = format(left);
 
-/* UPDATE */
-function update(){
-  let left=Math.max(0,Math.floor((endTime-Date.now())/1000));
-  mainTimer.textContent=format(left);
+  let elapsed = totalDuration - left;
+  let progress = elapsed / totalDuration;
 
-  /* BAR FIX (REQUESTED BEHAVIOUR) */
-  if(phase==="reading"){
+  let readingEnd = readingDuration / totalDuration;
 
-    readingBar.style.width = (left / readingDuration) * 100 + "%";
-    writingBar.style.width = "0%";
+  // =========================
+  // PHASE 1: READING
+  // green shrinks from RIGHT → blue grows from RIGHT
+  // =========================
+  if (progress <= readingEnd) {
 
-    if(left<=0){
-      phase="writing";
-      endTime=Date.now()+writingDuration*1000;
+    let p = progress / readingEnd;
 
-      burstFlash(3);
-    }
+    barFill.style.background = `linear-gradient(to left,
+      #3498db 0%,
+      #3498db ${p * 100}%,
+      #2ecc71 ${p * 100}%,
+      #2ecc71 100%
+    )`;
 
-  } else {
-
-    readingBar.style.width = "0%";
-    writingBar.style.width = (left / writingDuration) * 100 + "%";
-
-    if(left<=0){
-      startContinuousFlash();
-      clearInterval(timer);
-      mainBtn.textContent="⛔ Stop";
-    }
   }
 
-  /* WARNINGS */
-  if(!fiveDone && left<=300 && left>120){
-    fiveDone=true;
+  // =========================
+  // PHASE 2: WRITING
+  // blue shrinks from LEFT → grey grows from LEFT
+  // =========================
+  else {
+
+    let p = (progress - readingEnd) / (1 - readingEnd);
+
+    barFill.style.background = `linear-gradient(to right,
+      #444 0%,
+      #444 ${p * 100}%,
+      #3498db ${p * 100}%,
+      #3498db 100%
+    )`;
+  }
+
+  barFill.style.width = "100%";
+
+  // =========================
+  // WARNINGS (unchanged)
+  // =========================
+  if (!fiveDone && left <= 300 && left > 120) {
+    fiveDone = true;
     burstFlash(5);
   }
 
-  if(!twoDone && left<=120 && left>60){
-    twoDone=true;
+  if (!twoDone && left <= 120 && left > 60) {
+    twoDone = true;
     burstFlash(2);
   }
 
-  if(!oneDone && left<=60 && left>0){
-    oneDone=true;
+  if (!oneDone && left <= 60 && left > 0) {
+    oneDone = true;
     burstFlash(1);
+  }
+
+  if (left <= 0) {
+    startContinuousFlash();
+    clearInterval(timer);
+    mainBtn.textContent = "⛔ Stop";
   }
 }
 
 /* FLASH */
-function flashOnce(){
+function flashOnce() {
   document.body.classList.remove("flash");
   void document.body.offsetWidth;
   document.body.classList.add("flash");
 }
 
-function burstFlash(n){
-  let i=0;
-  let t=setInterval(()=>{
-    flashOnce();
-    i++;
-    if(i>=n) clearInterval(t);
-  },300);
-}
-
-function startContinuousFlash(){
-  if(flashLoop) return;
-  flashLoop=setInterval(flashOnce,400);
-}
-
-function stopFlash(){
-  clearInterval(flashLoop);
-  flashLoop=null;
-}
-
-/* FULLSCREEN */
-function toggleFullscreen(){
-  if(!document.fullscreenElement){
-    document.documentElement.requestFullscreen();
-  } else {
-    document.exitFullscreen();
-  }
-}
-
-/* SPACEBAR FIX */
-document.addEventListener("keydown", (e) => {
-  if (e.code === "Space") {
-    e.preventDefault();
-    startPauseButton();
-  }
-});
-
-/* FORMAT */
-function format(s){
-  let m=Math.floor(s/60), sec=s%60;
-  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-}
-
-</script>
-
-</body>
-</html>
+function burstFlash(n) {
+  let i = 0;
+  let t =
