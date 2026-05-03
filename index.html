@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Exam Timer</title>
-
 <style>
   body {
     margin: 0;
@@ -11,6 +10,7 @@
     background: #111;
     color: #fff;
     text-align: center;
+    transition: background 0.3s;
   }
 
   #topbar {
@@ -21,233 +21,332 @@
   }
 
   #lock img {
-    width: 30px;
-    height: 30px;
+    width: 20px;
+    height: 20px;
     cursor: pointer;
+    filter: invert(1);
   }
+
+  h1 { margin: 10px 0; }
 
   .timer {
-    font-size: 76px;
+    font-size: 80px;
+    font-weight: bold;
     margin: 10px 0 20px;
+    font-variant-numeric: tabular-nums;
   }
 
+  .container {
+    display: flex;
+    justify-content: center;
+    gap: 80px;
+    margin: 25px 0;
+  }
+
+  .box {
+    border: 2px solid #333;
+    padding: 25px;
+    width: 240px;
+    border-radius: 12px;
+    background: #161616;
+  }
+
+  .reading-title { border-bottom: 3px solid #2ecc71; padding-bottom: 3px; }
+  .writing-title { border-bottom: 3px solid #3498db; padding-bottom: 3px; }
+
+  /* ADVANCED BAR LOGIC */
   #barContainer {
     width: 80%;
-    height: 16px;
-    margin: 20px auto;
-    background: #222;
-    border-radius: 8px;
+    height: 24px;
+    margin: 30px auto;
+    background: #333; /* The "Grey" (Time Gone) */
+    border-radius: 12px;
     overflow: hidden;
     position: relative;
+    border: 2px solid #444;
   }
 
-  #greyBar {
+  /* Blue layer (Writing) */
+  #writingBar {
     position: absolute;
-    right: 0;
+    left: 0;
     top: 0;
     height: 100%;
-    background: #444;
+    background: #3498db;
     width: 0%;
+    z-index: 1;
   }
 
+  /* Green layer (Reading) - Sits on top of Blue */
   #readingBar {
     position: absolute;
     left: 0;
     top: 0;
     height: 100%;
     background: #2ecc71;
-    width: 100%;
-  }
-
-  #writingBar {
-    position: absolute;
-    right: 0;
-    top: 0;
-    height: 100%;
-    background: #3498db;
     width: 0%;
+    z-index: 2;
   }
 
   button {
     margin: 8px;
-    padding: 12px 20px;
-    border: none;
+    padding: 14px 22px;
+    font-size: 16px;
     border-radius: 8px;
+    border: none;
     cursor: pointer;
+    font-weight: bold;
   }
 
-  .play { background:#2ecc71; }
-  .stop { background:#e74c3c; color:white; }
+  .play { background: #2ecc71; color: black; }
+  .stop { background: #e74c3c; color: white; }
 
-  .flash {
-    animation: flash 0.25s alternate 2;
+  .input-grid {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 40px;
   }
 
+  input {
+    padding: 14px;
+    width: 100px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    text-align: center;
+    background: #222;
+    color: white;
+  }
+
+  .flash { animation: flash 0.25s alternate 2; }
   @keyframes flash {
-    0% { background:#111; }
-    100% { background:#8b0000; }
+    0% { background: #111; }
+    100% { background: #8b0000; }
   }
 </style>
 </head>
-
 <body>
+
+<div id="topbar">
+  <div>Eddie Singh</div>
+  <div id="lock" onclick="toggleFullscreen()">
+    <img src="https://cdn-icons-png.flaticon.com/512/61/61457.png" alt="lock">
+  </div>
+</div>
+
+<h1>Exam Timer</h1>
+
+<div class="container">
+  <div class="box">
+    <h2><span class="reading-title">Reading</span></h2>
+    <p id="readingTime">00:00</p>
+  </div>
+  <div class="box">
+    <h2><span class="writing-title">Writing</span></h2>
+    <p id="writingTime">00:00</p>
+  </div>
+</div>
 
 <div class="timer" id="mainTimer">00:00</div>
 
 <div id="barContainer">
-  <div id="greyBar"></div>
-  <div id="readingBar"></div>
   <div id="writingBar"></div>
+  <div id="readingBar"></div>
 </div>
 
-<button class="play" id="mainBtn" onclick="startPause()">Start</button>
+<div>
+  <button onclick="selectSession(60,10)">60 + 10</button>
+  <button onclick="selectSession(50,5)">50 + 5</button>
+  <button onclick="selectSession(90,10)">90 + 10</button>
+</div>
+
+<button class="play" id="mainBtn" onclick="startPauseButton()">▶ Start</button>
 <button class="stop" onclick="stopTimer()">Stop</button>
 
+<div class="input-grid">
+  <div>
+    <h3>Reading (min)</h3>
+    <input id="readInput" type="number" value="10">
+  </div>
+  <div>
+    <h3>Writing (min)</h3>
+    <input id="writeInput" type="number" value="90">
+  </div>
+</div>
+<button onclick="applyCustom()">Apply Custom</button>
+
 <script>
-
-/* ================= AUDIO ================= */
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-function beep(freq=800, time=0.15){
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  o.connect(g); g.connect(audioCtx.destination);
-  o.frequency.value = freq;
-  g.gain.value = 0.2;
-  o.start();
-  setTimeout(()=>o.stop(), time*1000);
-}
-
-/* ================= STATE ================= */
 let timer;
-let startTime;
-let endTime;
-let pauseOffset = 0;
+let readingDuration = 0, writingDuration = 0, totalDuration = 0;
+let running = false, paused = false;
+let endTime = 0, remainingAtPause = 0;
 
-let reading = 90 * 60;
-let writing = 10 * 60;
-let total = reading + writing;
+let alerts = { five: false, two: false, one: false };
+let flashLoop = null;
 
-let running = false;
-let paused = false;
+const rBar = document.getElementById('readingBar');
+const wBar = document.getElementById('writingBar');
+const mTimer = document.getElementById('mainTimer');
+const btn = document.getElementById('mainBtn');
 
-/* alerts */
-let a5=false, a2=false, a1=false;
+function toSec(m) { return Math.round(parseFloat(m || 0) * 60); }
 
-/* ================= CONTROL ================= */
-function startPause(){
+function selectSession(r, w) {
+  stopTimer();
+  readingDuration = toSec(r);
+  writingDuration = toSec(w);
+  totalDuration = readingDuration + writingDuration;
+  
+  document.getElementById('readingTime').textContent = format(readingDuration);
+  document.getElementById('writingTime').textContent = format(writingDuration);
+  mTimer.textContent = format(totalDuration);
+  
+  // Initial Bar State: Green covers everything
+  rBar.style.width = "100%";
+  wBar.style.width = "100%";
+}
 
-  if(!running){
-    start();
-  }
-  else if(!paused){
-    pause();
-  }
-  else {
-    resume();
+function applyCustom() {
+  selectSession(document.getElementById('readInput').value, document.getElementById('writeInput').value);
+}
+
+function startPauseButton() {
+  if (!totalDuration) return;
+  if (!running) {
+    startTimer();
+  } else if (!paused) {
+    pauseTimer();
+  } else {
+    resumeTimer();
   }
 }
 
-function start(){
+function startTimer() {
   running = true;
   paused = false;
-
-  startTime = Date.now();
-  endTime = startTime + total*1000;
-
-  mainBtn.textContent = "Pause";
-
-  timer = setInterval(update, 1000);
+  endTime = Date.now() + (totalDuration * 1000);
+  alerts = { five: false, two: false, one: false };
+  btn.textContent = "⏸ Pause";
+  btn.style.background = "#f39c12";
+  timer = setInterval(update, 100);
 }
 
-function pause(){
+function pauseTimer() {
   paused = true;
+  remainingAtPause = endTime - Date.now();
   clearInterval(timer);
-  pauseOffset = endTime - Date.now();
-  mainBtn.textContent = "Resume";
+  btn.textContent = "▶ Resume";
+  btn.style.background = "#2ecc71";
 }
 
-function resume(){
+function resumeTimer() {
   paused = false;
-  endTime = Date.now() + pauseOffset;
-  timer = setInterval(update, 1000);
-  mainBtn.textContent = "Pause";
+  endTime = Date.now() + remainingAtPause;
+  btn.textContent = "⏸ Pause";
+  btn.style.background = "#f39c12";
+  timer = setInterval(update, 100);
 }
 
-function stopTimer(){
+function stopTimer() {
   clearInterval(timer);
-  running=false;
-  paused=false;
-
-  mainTimer.textContent="00:00";
-  mainBtn.textContent="Start";
-
-  resetBars();
+  stopFlash();
+  running = false;
+  paused = false;
+  btn.textContent = "▶ Start";
+  btn.style.background = "#2ecc71";
+  mTimer.textContent = format(totalDuration);
+  rBar.style.width = "100%";
+  wBar.style.width = "100%";
 }
 
-function resetBars(){
-  greyBar.style.width="0%";
-  readingBar.style.width="100%";
-  writingBar.style.width="0%";
+function update() {
+  const now = Date.now();
+  let diff = endTime - now;
+  
+  if (diff <= 0) {
+    finish();
+    return;
+  }
+
+  let left = Math.floor(diff / 1000);
+  mTimer.textContent = format(left);
+
+  // --- THE BAR LOGIC ---
+  // Total progress percentage (0 to 100)
+  let totalElapsed = totalDuration - (diff / 1000);
+  
+  if (totalElapsed <= readingDuration) {
+    // PHASE 1: READING
+    // Green shrinks from right to left
+    let readingRemainingPC = ((readingDuration - totalElapsed) / readingDuration) * 100;
+    rBar.style.width = readingRemainingPC + "%";
+    // Blue is fully visible behind the shrinking green
+    wBar.style.width = "100%";
+  } else {
+    // PHASE 2: WRITING
+    // Green is gone
+    rBar.style.width = "0%";
+    // Blue shrinks from left to right, revealing grey background
+    let writingElapsed = totalElapsed - readingDuration;
+    let writingRemainingPC = ((writingDuration - writingElapsed) / writingDuration) * 100;
+    wBar.style.width = writingRemainingPC + "%";
+    // To make it shrink from Left-to-Right, we shift the bar to the left
+    // But since the container is 'Grey', we just set the width. 
+    // To make it disappear from the right, the width naturally works.
+  }
+
+  // ALERTS
+  if (!alerts.five && left <= 300) { alerts.five = true; burstFlash(5); }
+  if (!alerts.two && left <= 120) { alerts.two = true; burstFlash(2); }
+  if (!alerts.one && left <= 60) { alerts.one = true; burstFlash(1); }
 }
 
-/* ================= CORE LOGIC ================= */
-function update(){
-
-  let left = Math.max(0, Math.floor((endTime - Date.now())/1000));
-  let elapsed = total - left;
-
-  greyBar.style.width = (elapsed/total)*100 + "%";
-
-  /* ===== PHASE SPLIT ===== */
-  if(left > writing){
-
-    let readingLeft = left - writing;
-
-    mainTimer.textContent = format(readingLeft);
-
-    readingBar.style.width = (readingLeft/reading)*100 + "%";
-    writingBar.style.width = "0%";
-  }
-  else {
-
-    mainTimer.textContent = format(left);
-
-    readingBar.style.width = "0%";
-    writingBar.style.width = (left/writing)*100 + "%";
-  }
-
-  /* ===== ALERTS ===== */
-  if(left<=300 && !a5){ a5=true; flash(5); }
-  if(left<=120 && !a2){ a2=true; flash(2); }
-  if(left<=60 && !a1){ a1=true; flash(1); }
-
-  if(left<=0){
-    clearInterval(timer);
-    mainTimer.textContent="00:00";
-  }
+function finish() {
+  clearInterval(timer);
+  mTimer.textContent = "00:00";
+  wBar.style.width = "0%";
+  rBar.style.width = "0%";
+  startContinuousFlash();
+  btn.textContent = "⛔ Time's Up";
 }
 
-/* ================= FLASH ================= */
-function flash(n){
+function format(s) {
+  let m = Math.floor(s / 60), sec = s % 60;
+  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+}
+
+function flashOnce() {
+  document.body.classList.remove("flash");
+  void document.body.offsetWidth;
   document.body.classList.add("flash");
-  beep(900);
-  setTimeout(()=>document.body.classList.remove("flash"),300);
 }
 
-/* ================= FORMAT ================= */
-function format(s){
-  let m=Math.floor(s/60);
-  let r=s%60;
-  return String(m).padStart(2,'0')+":"+String(r).padStart(2,'0');
+function burstFlash(n) {
+  let i = 0;
+  let t = setInterval(() => { flashOnce(); i++; if (i >= n) clearInterval(t); }, 400);
 }
 
-/* ================= BUTTON FIX ================= */
-function startPause(){
-  startPause(); // alias safety
+function startContinuousFlash() {
+  if (!flashLoop) flashLoop = setInterval(flashOnce, 500);
 }
 
+function stopFlash() {
+  clearInterval(flashLoop);
+  flashLoop = null;
+  document.body.classList.remove("flash");
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+// Init
+selectSession(10, 90);
 </script>
-
 </body>
 </html>
