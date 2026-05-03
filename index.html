@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Reading & Writing Timer</title>
+  <title>Exam Timer</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -35,8 +35,13 @@
     }
 
     .timer {
-      font-size: 48px;
+      font-size: 60px;
       margin: 20px 0;
+    }
+
+    .status {
+      font-size: 20px;
+      margin-bottom: 10px;
     }
 
     button {
@@ -48,20 +53,23 @@
       cursor: pointer;
     }
 
-    .preset {
-      background: #3498db;
-      color: white;
-    }
+    .preset { background: #3498db; color: white; }
+    .control { background: #e74c3c; color: white; }
+    .secondary { background: #555; color: white; }
 
-    .control {
-      background: #e74c3c;
-      color: white;
+    input {
+      padding: 8px;
+      margin: 5px;
+      width: 80px;
+      text-align: center;
+      border-radius: 5px;
+      border: none;
     }
   </style>
 </head>
 <body>
 
-  <h1>Reading & Writing Timer</h1>
+  <h1>Exam Timer</h1>
 
   <div class="container">
     <div id="readingBox" class="box">
@@ -75,79 +83,172 @@
     </div>
   </div>
 
+  <div class="status" id="statusText">Ready</div>
   <div class="timer" id="mainTimer">00:00</div>
 
+  <!-- Presets -->
   <div>
-    <button class="preset" onclick="startSession(60, 10)">60 + 10</button>
-    <button class="preset" onclick="startSession(50, 5)">50 + 5</button>
-    <button class="preset" onclick="startSession(90, 10)">90 + 10</button>
+    <button class="preset" onclick="startSession(60,10)">60 + 10</button>
+    <button class="preset" onclick="startSession(50,5)">50 + 5</button>
+    <button class="preset" onclick="startSession(90,10)">90 + 10</button>
   </div>
 
+  <!-- Custom -->
+  <div>
+    <h3>Custom</h3>
+    Writing: <input id="writeInput" type="number" min="1">
+    Reading: <input id="readInput" type="number" min="1">
+    <br>
+    <button class="preset" onclick="startCustom()">Start</button>
+  </div>
+
+  <!-- Controls -->
   <div>
     <button class="control" onclick="stopTimer()">Stop</button>
+    <button class="secondary" onclick="togglePause()">Pause / Resume (Space)</button>
+    <button class="secondary" onclick="goFullscreen()">Fullscreen</button>
   </div>
 
+  <!-- Beep sound -->
+  <audio id="beep">
+    <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+  </audio>
+
   <script>
-    let timer;
-    let timeLeft = 0;
+    let timer = null;
+    let endTime = 0;
+    let paused = false;
+    let remainingWhenPaused = 0;
+
     let phase = "reading";
     let readingDuration = 0;
     let writingDuration = 0;
 
-    function startSession(readMin, writeMin) {
+    let warningPlayed = false;
+
+    function startSession(writeMin, readMin) {
       clearInterval(timer);
 
-      readingDuration = readMin * 60;
       writingDuration = writeMin * 60;
+      readingDuration = readMin * 60;
 
-      document.getElementById("readingTime").textContent = formatTime(readingDuration);
       document.getElementById("writingTime").textContent = formatTime(writingDuration);
+      document.getElementById("readingTime").textContent = formatTime(readingDuration);
 
       phase = "reading";
-      timeLeft = readingDuration;
-
-      updateUI();
-
-      timer = setInterval(runTimer, 1000);
+      startPhase(readingDuration);
     }
 
-    function runTimer() {
+    function startCustom() {
+      const w = parseInt(writeInput.value);
+      const r = parseInt(readInput.value);
+
+      if (!w || !r || w <= 0 || r <= 0) {
+        alert("Enter valid times");
+        return;
+      }
+
+      startSession(w, r);
+    }
+
+    function startPhase(duration) {
+      warningPlayed = false;
+      paused = false;
+
+      endTime = Date.now() + duration * 1000;
+
+      updateUI();
+      updateStatus();
+
+      timer = setInterval(updateTimer, 200);
+    }
+
+    function updateTimer() {
+      if (paused) return;
+
+      const now = Date.now();
+      let timeLeft = Math.max(0, Math.floor((endTime - now) / 1000));
+
+      // 5 minute warning
+      if (timeLeft === 300 && !warningPlayed) {
+        playBeep();
+        warningPlayed = true;
+      }
+
+      document.getElementById("mainTimer").textContent = formatTime(timeLeft);
+
       if (timeLeft <= 0) {
         if (phase === "reading") {
           phase = "writing";
-          timeLeft = writingDuration;
+          startPhase(writingDuration);
         } else {
           clearInterval(timer);
-          alert("Session complete!");
-          return;
+          playBeep();
+          alert("Session complete");
+          document.getElementById("statusText").textContent = "Finished";
         }
-        updateUI();
       }
+    }
 
-      timeLeft--;
-      document.getElementById("mainTimer").textContent = formatTime(timeLeft);
+    function togglePause() {
+      if (!timer) return;
+
+      if (!paused) {
+        remainingWhenPaused = endTime - Date.now();
+        paused = true;
+        document.getElementById("statusText").textContent += " (Paused)";
+      } else {
+        paused = false;
+        endTime = Date.now() + remainingWhenPaused;
+        updateStatus();
+      }
     }
 
     function stopTimer() {
       clearInterval(timer);
+      timer = null;
+      document.getElementById("statusText").textContent = "Stopped";
     }
 
     function updateUI() {
-      document.getElementById("readingBox").classList.remove("active");
-      document.getElementById("writingBox").classList.remove("active");
+      readingBox.classList.remove("active");
+      writingBox.classList.remove("active");
 
       if (phase === "reading") {
-        document.getElementById("readingBox").classList.add("active");
+        readingBox.classList.add("active");
       } else {
-        document.getElementById("writingBox").classList.add("active");
+        writingBox.classList.add("active");
       }
     }
 
-    function formatTime(seconds) {
-      let m = Math.floor(seconds / 60);
-      let s = seconds % 60;
-      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    function updateStatus() {
+      document.getElementById("statusText").textContent =
+        phase === "reading" ? "Reading Time" : "Writing Time";
     }
+
+    function formatTime(sec) {
+      let m = Math.floor(sec / 60);
+      let s = sec % 60;
+      return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+
+    function playBeep() {
+      document.getElementById("beep").play();
+    }
+
+    function goFullscreen() {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen();
+      }
+    }
+
+    // Spacebar shortcut
+    document.addEventListener("keydown", function(e) {
+      if (e.code === "Space") {
+        e.preventDefault();
+        togglePause();
+      }
+    });
   </script>
 
 </body>
