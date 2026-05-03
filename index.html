@@ -29,7 +29,7 @@
   h1 { margin: 10px 0; }
 
   .timer {
-    font-size: 78px;
+    font-size: 76px;
     margin: 10px 0 20px;
   }
 
@@ -66,11 +66,18 @@
     background: #222;
     border-radius: 8px;
     overflow: hidden;
+    display: flex;
   }
 
-  #barFill {
+  #readingBar {
+    background: #2ecc71;
     height: 100%;
-    width: 100%;
+    transition: width 0.2s linear;
+  }
+
+  #writingBar {
+    background: #3498db;
+    height: 100%;
     transition: width 0.2s linear;
   }
 
@@ -87,6 +94,7 @@
   .play { background: #2ecc71; color: black; }
   .stop { background: #e74c3c; color: white; }
 
+  /* INPUTS */
   .input-grid {
     display: flex;
     justify-content: center;
@@ -105,6 +113,7 @@
     color: white;
   }
 
+  /* FLASH */
   .flash {
     animation: flash 0.25s alternate 2;
   }
@@ -113,11 +122,13 @@
     0% { background: #111; }
     100% { background: #8b0000; }
   }
+
 </style>
 </head>
 
 <body>
 
+<!-- TOP -->
 <div id="topbar">
   <div>Eddie Singh</div>
   <div id="lock" onclick="toggleFullscreen()">
@@ -143,7 +154,8 @@
 
 <!-- BAR -->
 <div id="barContainer">
-  <div id="barFill"></div>
+  <div id="readingBar"></div>
+  <div id="writingBar"></div>
 </div>
 
 <!-- PRESETS -->
@@ -153,7 +165,7 @@
   <button onclick="selectSession(90,10)">90 + 10</button>
 </div>
 
-<button class="play" id="mainBtn" onclick="startPause()">▶ Start</button>
+<button class="play" id="mainBtn" onclick="startPauseButton()">▶ Start</button>
 <button class="stop" onclick="stopTimer()">Stop</button>
 
 <!-- INPUTS -->
@@ -180,8 +192,6 @@ let running=false;
 let paused=false;
 let remaining=0;
 
-let phase="reading";
-
 // alerts
 let fiveDone=false;
 let twoDone=false;
@@ -202,19 +212,18 @@ function selectSession(r,w){
   setupBar();
 }
 
-/* CUSTOM */
 function applyCustom(){
   selectSession(readInput.value, writeInput.value);
 }
 
 /* BAR */
 function setupBar(){
-  barFill.style.width="100%";
-  barFill.style.background="#2ecc71"; // start reading green
+  readingBar.style.width=(readingDuration/totalDuration)*100+"%";
+  writingBar.style.width=(writingDuration/totalDuration)*100+"%";
 }
 
-/* START / PAUSE */
-function startPause(){
+/* BUTTON */
+function startPauseButton(){
   if(!running){
     startTimer();
     return;
@@ -236,8 +245,7 @@ function startTimer(){
   running=true;
   paused=false;
 
-  phase="reading";
-  endTime=Date.now()+readingDuration*1000;
+  endTime=Date.now()+totalDuration*1000;
 
   fiveDone=false;
   twoDone=false;
@@ -260,50 +268,32 @@ function resumeTimer(){
   timer=setInterval(update,200);
 }
 
-/* STOP */
 function stopTimer(){
-  clearInterval(timer);
-  stopFlash();
   running=false;
   paused=false;
+
+  clearInterval(timer);
+  stopFlash();
+
   mainBtn.textContent="▶ Start";
+
   mainTimer.textContent="00:00";
 }
 
-/* UPDATE */
+/* UPDATE (FIXED CORE LOGIC) */
 function update(){
   let left=Math.max(0,Math.floor((endTime-Date.now())/1000));
   mainTimer.textContent=format(left);
 
-  let elapsed;
+  // ---------------- FIXED BAR LOGIC ----------------
+  let readingLeft=Math.min(readingDuration,left);
+  let writingLeft=Math.max(0,left-readingDuration);
 
-  /* PHASE SWITCH */
-  if(phase==="reading"){
-    elapsed = readingDuration - left;
+  readingBar.style.width=(readingLeft/readingDuration)*100+"%";
+  writingBar.style.width=(writingLeft/writingDuration)*100+"%";
 
-    barFill.style.width = (left/readingDuration)*100 + "%";
-    barFill.style.background = "#2ecc71"; // GREEN
+  // ---------------- ALERTS ----------------
 
-    if(left<=0){
-      phase="writing";
-      endTime=Date.now()+writingDuration*1000;
-      flashOnce();
-    }
-
-  } else {
-    elapsed = writingDuration - left;
-
-    barFill.style.width = (left/writingDuration)*100 + "%";
-    barFill.style.background = "#3498db"; // BLUE
-
-    if(left<=0){
-      startContinuousFlash();
-      clearInterval(timer);
-      mainBtn.textContent="⛔ Stop";
-    }
-  }
-
-  /* ALERTS */
   if(!fiveDone && left<=300 && left>120){
     fiveDone=true;
     burstFlash(5);
@@ -317,6 +307,12 @@ function update(){
   if(!oneDone && left<=60 && left>0){
     oneDone=true;
     burstFlash(1);
+  }
+
+  if(left<=0){
+    startContinuousFlash();
+    clearInterval(timer);
+    mainBtn.textContent="⛔ Stop";
   }
 }
 
