@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Reading & Writing Timer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #111;
+      color: #fff;
+    }
+
+    h1 {
+      margin-top: 20px;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin: 20px;
+    }
+
+    .box {
+      border: 2px solid #fff;
+      padding: 20px;
+      width: 200px;
+      border-radius: 10px;
+    }
+
+    .active {
+      background-color: #2ecc71;
+      color: #000;
+    }
+
+    .timer {
+      font-size: 48px;
+      margin: 20px 0;
+    }
+
+    button {
+      margin: 5px;
+      padding: 10px 15px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .preset {
+      background: #3498db;
+      color: white;
+    }
+
+    .control {
+      background: #e74c3c;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Reading & Writing Timer</h1>
+
+  <div class="container">
+    <div id="readingBox" class="box">
+      <h2>Reading</h2>
+      <p id="readingTime">00:00</p>
+    </div>
+
+    <div id="writingBox" class="box">
+      <h2>Writing</h2>
+      <p id="writingTime">00:00</p>
+    </div>
+  </div>
+
+  <div class="timer" id="mainTimer">00:00</div>
+
+  <div>
+    <button class="preset" onclick="startSession(60, 10)">60 + 10</button>
+    <button class="preset" onclick="startSession(50, 5)">50 + 5</button>
+    <button class="preset" onclick="startSession(90, 10)">90 + 10</button>
+  </div>
+
+  <div>
+    <button class="control" onclick="stopTimer()">Stop</button>
+  </div>
+
+  <script>
+    let timer;
+    let timeLeft = 0;
+    let phase = "reading";
+    let readingDuration = 0;
+    let writingDuration = 0;
+
+    function startSession(readMin, writeMin) {
+      clearInterval(timer);
+
+      readingDuration = readMin * 60;
+      writingDuration = writeMin * 60;
+
+      document.getElementById("readingTime").textContent = formatTime(readingDuration);
+      document.getElementById("writingTime").textContent = formatTime(writingDuration);
+
+      phase = "reading";
+      timeLeft = readingDuration;
+
+      updateUI();
+
+      timer = setInterval(runTimer, 1000);
+    }
+
+    function runTimer() {
+      if (timeLeft <= 0) {
+        if (phase === "reading") {
+          phase = "writing";
+          timeLeft = writingDuration;
+        } else {
+          clearInterval(timer);
+          alert("Session complete!");
+          return;
+        }
+        updateUI();
+      }
+
+      timeLeft--;
+      document.getElementById("mainTimer").textContent = formatTime(timeLeft);
+    }
+
+    function stopTimer() {
+      clearInterval(timer);
+    }
+
+    function updateUI() {
+      document.getElementById("readingBox").classList.remove("active");
+      document.getElementById("writingBox").classList.remove("active");
+
+      if (phase === "reading") {
+        document.getElementById("readingBox").classList.add("active");
+      } else {
+        document.getElementById("writingBox").classList.add("active");
+      }
+    }
+
+    function formatTime(seconds) {
+      let m = Math.floor(seconds / 60);
+      let s = seconds % 60;
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+  </script>
+
+</body>
+</html>
