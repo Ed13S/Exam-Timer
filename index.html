@@ -11,16 +11,13 @@
     background: #111;
     color: #fff;
     text-align: center;
-    transition: background 0.2s;
   }
 
-  /* TOP BAR */
   #topbar {
     display: flex;
     justify-content: space-between;
     padding: 14px 24px;
     font-size: 14px;
-    opacity: 0.9;
   }
 
   #lock img {
@@ -31,13 +28,11 @@
 
   h1 { margin: 10px 0; }
 
-  /* TIMER */
   .timer {
-    font-size: 78px;
+    font-size: 76px;
     margin: 10px 0 20px;
   }
 
-  /* BOXES */
   .container {
     display: flex;
     justify-content: center;
@@ -54,16 +49,16 @@
   }
 
   .reading-title {
-    border-bottom: 3px solid #3498db;
-    padding-bottom: 3px;
-  }
-
-  .writing-title {
     border-bottom: 3px solid #2ecc71;
     padding-bottom: 3px;
   }
 
-  /* SPLIT BAR */
+  .writing-title {
+    border-bottom: 3px solid #3498db;
+    padding-bottom: 3px;
+  }
+
+  /* BAR */
   #barContainer {
     width: 80%;
     height: 16px;
@@ -75,13 +70,13 @@
   }
 
   #readingBar {
-    background: #3498db;
+    background: #2ecc71;
     height: 100%;
     transition: width 0.2s linear;
   }
 
   #writingBar {
-    background: #2ecc71;
+    background: #3498db;
     height: 100%;
     transition: width 0.2s linear;
   }
@@ -118,7 +113,7 @@
     color: white;
   }
 
-  /* FLASH RED */
+  /* FLASH */
   .flash {
     animation: flash 0.25s alternate 2;
   }
@@ -128,11 +123,6 @@
     100% { background: #8b0000; }
   }
 
-  #warn {
-    font-size: 22px;
-    height: 30px;
-    color: red;
-  }
 </style>
 </head>
 
@@ -140,7 +130,7 @@
 
 <!-- TOP -->
 <div id="topbar">
-  <div>Eddie Singh</div>
+  <div>👤 Eddie Singh</div>
   <div id="lock" onclick="toggleFullscreen()">
     <img src="https://p7.hiclipart.com/preview/23/137/277/padlock-computer-icons-door-padlock.jpg">
   </div>
@@ -160,11 +150,9 @@
   </div>
 </div>
 
-<div id="warn"></div>
-
 <div class="timer" id="mainTimer">00:00</div>
 
-<!-- SPLIT BAR -->
+<!-- BAR -->
 <div id="barContainer">
   <div id="readingBar"></div>
   <div id="writingBar"></div>
@@ -196,9 +184,9 @@
 <button onclick="applyCustom()">Apply</button>
 
 <script>
+
 let timer, endTime;
-let readingDuration=0, writingDuration=0;
-let totalDuration=0;
+let readingDuration=0, writingDuration=0, totalDuration=0;
 
 let running=false;
 let paused=false;
@@ -212,7 +200,7 @@ let flashLoop=null;
 
 function toSec(m){return Math.round(parseFloat(m||0)*60);}
 
-/* SET SESSION */
+/* SET */
 function selectSession(r,w){
   readingDuration=toSec(r);
   writingDuration=toSec(w);
@@ -292,19 +280,19 @@ function stopTimer(){
   mainTimer.textContent="00:00";
 }
 
-/* UPDATE */
+/* UPDATE (FIXED CORE LOGIC) */
 function update(){
   let left=Math.max(0,Math.floor((endTime-Date.now())/1000));
   mainTimer.textContent=format(left);
 
-  // BAR LOGIC (reading then writing)
+  // ---------------- FIXED BAR LOGIC ----------------
   let readingLeft=Math.min(readingDuration,left);
   let writingLeft=Math.max(0,left-readingDuration);
 
   readingBar.style.width=(readingLeft/readingDuration)*100+"%";
   writingBar.style.width=(writingLeft/writingDuration)*100+"%";
 
-  /* ALERTS */
+  // ---------------- ALERTS ----------------
 
   if(!fiveDone && left<=300 && left>120){
     fiveDone=true;
@@ -346,10 +334,7 @@ function burstFlash(n){
 
 function startContinuousFlash(){
   if(flashLoop) return;
-
-  flashLoop=setInterval(()=>{
-    flashOnce();
-  },400);
+  flashLoop=setInterval(flashOnce,400);
 }
 
 function stopFlash(){
@@ -371,6 +356,7 @@ function format(s){
   let m=Math.floor(s/60), sec=s%60;
   return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 }
+
 </script>
 
 </body>
