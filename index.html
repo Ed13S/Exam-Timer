@@ -58,7 +58,6 @@
     padding-bottom: 3px;
   }
 
-  /* BAR */
   #barContainer {
     width: 80%;
     height: 16px;
@@ -81,7 +80,6 @@
     transition: width 0.2s linear;
   }
 
-  /* BUTTONS */
   button {
     margin: 8px;
     padding: 14px 22px;
@@ -94,7 +92,6 @@
   .play { background: #2ecc71; color: black; }
   .stop { background: #e74c3c; color: white; }
 
-  /* INPUTS */
   .input-grid {
     display: flex;
     justify-content: center;
@@ -113,7 +110,6 @@
     color: white;
   }
 
-  /* FLASH */
   .flash {
     animation: flash 0.25s alternate 2;
   }
@@ -122,13 +118,11 @@
     0% { background: #111; }
     100% { background: #8b0000; }
   }
-
 </style>
 </head>
 
 <body>
 
-<!-- TOP -->
 <div id="topbar">
   <div>Eddie Singh</div>
   <div id="lock" onclick="toggleFullscreen()">
@@ -152,13 +146,11 @@
 
 <div class="timer" id="mainTimer">00:00</div>
 
-<!-- BAR -->
 <div id="barContainer">
   <div id="readingBar"></div>
   <div id="writingBar"></div>
 </div>
 
-<!-- PRESETS -->
 <div>
   <button onclick="selectSession(60,10)">60 + 10</button>
   <button onclick="selectSession(50,5)">50 + 5</button>
@@ -168,7 +160,6 @@
 <button class="play" id="mainBtn" onclick="startPauseButton()">▶ Start</button>
 <button class="stop" onclick="stopTimer()">Stop</button>
 
-<!-- INPUTS -->
 <div class="input-grid">
   <div>
     <h3>Reading (min)</h3>
@@ -192,10 +183,13 @@ let running=false;
 let paused=false;
 let remaining=0;
 
-// alerts
+let phase="reading";
+
+// flash flags
 let fiveDone=false;
 let twoDone=false;
 let oneDone=false;
+let readingEndDone=false;
 let flashLoop=null;
 
 function toSec(m){return Math.round(parseFloat(m||0)*60);}
@@ -212,6 +206,7 @@ function selectSession(r,w){
   setupBar();
 }
 
+/* CUSTOM */
 function applyCustom(){
   selectSession(readInput.value, writeInput.value);
 }
@@ -222,7 +217,7 @@ function setupBar(){
   writingBar.style.width=(writingDuration/totalDuration)*100+"%";
 }
 
-/* BUTTON */
+/* START/PAUSE */
 function startPauseButton(){
   if(!running){
     startTimer();
@@ -244,12 +239,11 @@ function startTimer(){
 
   running=true;
   paused=false;
+  phase="reading";
 
-  endTime=Date.now()+totalDuration*1000;
+  endTime=Date.now()+readingDuration*1000;
 
-  fiveDone=false;
-  twoDone=false;
-  oneDone=false;
+  resetFlags();
 
   mainBtn.textContent="⏸ Pause";
 
@@ -276,24 +270,47 @@ function stopTimer(){
   stopFlash();
 
   mainBtn.textContent="▶ Start";
-
   mainTimer.textContent="00:00";
 }
 
-/* UPDATE (FIXED CORE LOGIC) */
+/* RESET FLAGS */
+function resetFlags(){
+  fiveDone=false;
+  twoDone=false;
+  oneDone=false;
+  readingEndDone=false;
+}
+
+/* UPDATE */
 function update(){
   let left=Math.max(0,Math.floor((endTime-Date.now())/1000));
   mainTimer.textContent=format(left);
 
-  // ---------------- FIXED BAR LOGIC ----------------
-  let readingLeft=Math.min(readingDuration,left);
-  let writingLeft=Math.max(0,left-readingDuration);
+  /* PHASE SWITCH */
+  if(phase==="reading"){
 
-  readingBar.style.width=(readingLeft/readingDuration)*100+"%";
-  writingBar.style.width=(writingLeft/writingDuration)*100+"%";
+    readingBar.style.width=(left/readingDuration)*100+"%";
 
-  // ---------------- ALERTS ----------------
+    if(left<=0){
+      phase="writing";
+      endTime=Date.now()+writingDuration*1000;
 
+      flashOnce(); // reading ends flash
+      burstFlash(3); // REQUIRED FIX
+    }
+
+  } else {
+
+    writingBar.style.width=(left/writingDuration)*100+"%";
+
+    if(left<=0){
+      startContinuousFlash();
+      clearInterval(timer);
+      mainBtn.textContent="⛔ Stop";
+    }
+  }
+
+  /* WARNINGS */
   if(!fiveDone && left<=300 && left>120){
     fiveDone=true;
     burstFlash(5);
@@ -307,12 +324,6 @@ function update(){
   if(!oneDone && left<=60 && left>0){
     oneDone=true;
     burstFlash(1);
-  }
-
-  if(left<=0){
-    startContinuousFlash();
-    clearInterval(timer);
-    mainBtn.textContent="⛔ Stop";
   }
 }
 
