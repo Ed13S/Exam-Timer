@@ -51,7 +51,7 @@
   .reading-title { border-bottom: 3px solid #2ecc71; }
   .writing-title { border-bottom: 3px solid #3498db; }
 
-  /* ================= BAR ================= */
+  /* BAR */
   #barContainer {
     width: 80%;
     height: 16px;
@@ -62,7 +62,7 @@
     position: relative;
   }
 
-  /* elapsed (grey grows RIGHT → LEFT) */
+  /* elapsed */
   #greyBar {
     position: absolute;
     right: 0;
@@ -72,7 +72,7 @@
     width: 0%;
   }
 
-  /* reading (green shrinks RIGHT → LEFT) */
+  /* reading remaining */
   #readingBar {
     position: absolute;
     left: 0;
@@ -82,7 +82,7 @@
     width: 100%;
   }
 
-  /* writing (blue shrinks LEFT → RIGHT) */
+  /* writing remaining */
   #writingBar {
     position: absolute;
     right: 0;
@@ -120,15 +120,6 @@
     text-align: center;
     background: #222;
     color: white;
-  }
-
-  .flash {
-    animation: flash 0.25s alternate 2;
-  }
-
-  @keyframes flash {
-    0% { background: #111; }
-    100% { background: #8b0000; }
   }
 </style>
 </head>
@@ -189,23 +180,7 @@
 
 <script>
 
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-function beep(duration = 0.15, frequency = 880, volume = 0.2){
-  const oscillator = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-
-  oscillator.connect(gain);
-  gain.connect(audioCtx.destination);
-
-  oscillator.frequency.value = frequency;
-  gain.gain.value = volume;
-
-  oscillator.start();
-  setTimeout(() => oscillator.stop(), duration * 1000);
-}
-
-/* STATE */
+/* ================= STATE ================= */
 let timer, endTime;
 let readingDuration = 0;
 let writingDuration = 0;
@@ -215,14 +190,7 @@ let running = false;
 let paused = false;
 let remaining = 0;
 
-/* ALERTS */
-let fiveDone = false;
-let twoDone = false;
-let oneDone = false;
-let endAlert = false;
-let flashLoop = null;
-
-/* HELPERS */
+/* ================= HELPERS ================= */
 function toSec(m){ return Math.round(parseFloat(m||0)*60); }
 
 function format(s){
@@ -231,7 +199,7 @@ function format(s){
   return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 }
 
-/* SESSION */
+/* ================= SESSION ================= */
 function selectSession(r, w){
   readingDuration = toSec(r);
   writingDuration = toSec(w);
@@ -253,7 +221,7 @@ function resetBars(){
   writingBar.style.width = "0%";
 }
 
-/* TIMER */
+/* ================= TIMER ================= */
 function startPauseButton(){
   if(!running) startTimer();
   else if(!paused) pauseTimer();
@@ -289,45 +257,47 @@ function stopTimer(){
   running = false;
   paused = false;
   clearInterval(timer);
+
   mainTimer.textContent = "00:00";
   mainBtn.textContent = "▶ Start";
+
   resetBars();
 }
 
-/* FLASH */
-function flashOnce(){
-  document.body.classList.remove("flash");
-  void document.body.offsetWidth;
-  document.body.classList.add("flash");
-  beep();
-}
-
-/* UPDATE */
+/* ================= UPDATE (FIXED PHASE LOGIC) ================= */
 function update(){
   let left = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
   let elapsed = totalDuration - left;
 
-  mainTimer.textContent = format(left);
-
-  /* GREY (elapsed grows RIGHT → LEFT) */
   greyBar.style.width = (elapsed / totalDuration) * 100 + "%";
 
+  /* ========== READING PHASE ========== */
   if(left > writingDuration){
     let readingLeft = left - writingDuration;
 
+    mainTimer.textContent = format(readingLeft);
+
     readingBar.style.width = (readingLeft / readingDuration) * 100 + "%";
     writingBar.style.width = "0%";
-  } else {
+  }
+
+  /* ========== WRITING PHASE ========== */
+  else {
+    let writingLeft = left;
+
+    mainTimer.textContent = format(writingLeft);
+
     readingBar.style.width = "0%";
-    writingBar.style.width = (left / writingDuration) * 100 + "%";
+    writingBar.style.width = (writingLeft / writingDuration) * 100 + "%";
   }
 
   if(left <= 0){
     clearInterval(timer);
+    mainTimer.textContent = "00:00";
   }
 }
 
-/* FULLSCREEN */
+/* ================= FULLSCREEN ================= */
 function toggleFullscreen(){
   if(!document.fullscreenElement){
     document.documentElement.requestFullscreen();
