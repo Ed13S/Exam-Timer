@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Timer</title>
+<title>TIMER</title>
 <style>
   body {
     margin: 0;
@@ -23,7 +23,7 @@
     font-size: 14px;
   }
 
-  h1 { margin: 20px 0 10px; font-weight: 400; color: #fff; }
+  h1 { margin: 20px 0 10px; font-weight: 400; color: #fff; letter-spacing: 2px; }
 
   .timer-label {
     font-size: 1.2rem;
@@ -34,10 +34,10 @@
   }
 
   .timer {
-    font-size: 120px;
+    font-size: 130px;
     font-weight: 700;
     margin: 5px 0;
-    font-family: monospace;
+    font-family: 'Courier New', Courier, monospace;
   }
 
   .container {
@@ -50,33 +50,31 @@
   .box {
     border: 1px solid #333;
     padding: 20px;
-    width: 200px;
+    width: 220px;
     border-radius: 12px;
     background: #161616;
-    color: #fff;
-    transition: all 0.4s ease;
+    transition: all 0.5s ease;
   }
 
-  /* Active Phase Styling */
   .box.active-phase {
-    background: #e0e0e0; /* Darker white */
+    background: #e0e0e0;
     color: #000;
     border-color: #fff;
-    box-shadow: 0 0 15px rgba(255,255,255,0.2);
+    box-shadow: 0 0 20px rgba(255,255,255,0.15);
   }
 
-  .reading-title { font-weight: bold; display: block; margin-bottom: 5px; }
-  .writing-title { font-weight: bold; display: block; margin-bottom: 5px; }
+  .reading-title, .writing-title { font-weight: bold; display: block; margin-bottom: 5px; font-size: 0.9rem; }
 
+  /* THE PROGRESS BAR SYSTEM */
   #barContainer {
     width: 85%;
-    height: 35px;
+    height: 40px;
     margin: 25px auto;
-    background: #333;
-    border-radius: 6px;
+    background: #333; /* The "Grey" (Time Spent) */
+    border-radius: 8px;
     position: relative;
     overflow: hidden;
-    border: 1px solid #444;
+    border: 2px solid #444;
   }
 
   #writingBar {
@@ -84,7 +82,7 @@
     height: 100%;
     background: #3498db;
     width: 100%;
-    left: 0;
+    left: 0; /* Pinned left: will shrink Left-to-Right */
     z-index: 1;
   }
 
@@ -93,10 +91,11 @@
     height: 100%;
     background: #2ecc71;
     width: 100%;
-    right: 0;
+    right: 0; /* Pinned right: will shrink Right-to-Left */
     z-index: 2;
   }
 
+  /* BUTTONS & CONTROLS */
   button {
     margin: 5px;
     padding: 12px 25px;
@@ -105,17 +104,18 @@
     border: none;
     cursor: pointer;
     font-weight: 600;
+    transition: transform 0.1s;
   }
 
+  button:active { transform: scale(0.96); }
   .play { background: #2ecc71; color: #000; }
   .pause { background: #f1c40f; color: #000; }
   .stop { background: #e74c3c; color: #fff; }
   .alarm-btn { background: #ff4757; color: #fff; animation: pulse 1s infinite; }
 
   @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
   }
 
   input {
@@ -128,10 +128,10 @@
     text-align: center;
   }
 
-  .flash { animation: flashBg 0.3s alternate infinite; }
+  .flash { animation: flashBg 0.4s alternate infinite; }
   @keyframes flashBg {
     from { background: #111; }
-    to { background: #800; }
+    to { background: #700; }
   }
 </style>
 </head>
@@ -146,16 +146,16 @@
 
 <div class="container">
   <div id="readBox" class="box">
-    <span class="reading-title">READING</span>
-    <div id="readDisplay" style="font-size: 1.5rem;">00:00</div>
+    <span class="reading-title">READING TIME</span>
+    <div id="readDisplay" style="font-size: 1.8rem;">00:00</div>
   </div>
   <div id="writeBox" class="box">
-    <span class="writing-title">WRITING</span>
-    <div id="writeDisplay" style="font-size: 1.5rem;">00:00</div>
+    <span class="writing-title">WRITING TIME</span>
+    <div id="writeDisplay" style="font-size: 1.8rem;">00:00</div>
   </div>
 </div>
 
-<div id="phaseLabel" class="timer-label">Ready</div>
+<div id="phaseLabel" class="timer-label">STANDBY</div>
 <div class="timer" id="mainTimer">00:00</div>
 
 <div id="barContainer">
@@ -173,24 +173,21 @@
   <button onclick="applyCustom()">Set Custom</button>
   <br><br>
   <button id="mainBtn" class="play" onclick="handlePrimaryAction()">▶ START EXAM</button>
-  <button class="stop" onclick="resetTimer()">RESET</button>
+  <button class="stop" onclick="fullReset()">RESET</button>
 </div>
 
 <script>
-let readingSeconds = 0, writingSeconds = 0;
-let timeLeft = 0;
-let isReadingPhase = true;
-let timerInterval = null;
-let isPaused = false;
-let isAlarming = false;
+let rSec = 0, wSec = 0;
+let phase = 'reading'; // 'reading' or 'writing'
+let timerLeft = 0;
+let interval = null;
+let alarming = false;
 
 const mainBtn = document.getElementById('mainBtn');
 const mainTimer = document.getElementById('mainTimer');
 const phaseLabel = document.getElementById('phaseLabel');
 const rBar = document.getElementById('readingBar');
 const wBar = document.getElementById('writingBar');
-const readBox = document.getElementById('readBox');
-const writeBox = document.getElementById('writeBox');
 
 function updateClock() {
   document.getElementById('clockDisplay').textContent = new Date().toLocaleTimeString();
@@ -199,165 +196,145 @@ setInterval(updateClock, 1000);
 updateClock();
 
 function format(s) {
-  let mins = Math.floor(s / 60);
-  let secs = s % 60;
-  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  let m = Math.floor(s / 60);
+  let sec = s % 60;
+  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 }
 
 function setSession(r, w) {
-  clearInterval(timerInterval);
-  timerInterval = null;
-  isReadingPhase = true;
-  isAlarming = false;
-  isPaused = false;
-  document.body.classList.remove('flash');
-
-  readingSeconds = r * 60;
-  writingSeconds = w * 60;
+  fullReset();
+  rSec = r * 60;
+  wSec = w * 60;
   
-  document.getElementById('readDisplay').textContent = format(readingSeconds);
-  document.getElementById('writeDisplay').textContent = format(writingSeconds);
+  document.getElementById('readDisplay').textContent = format(rSec);
+  document.getElementById('writeDisplay').textContent = format(wSec);
   
-  timeLeft = readingSeconds > 0 ? readingSeconds : writingSeconds;
-  if (readingSeconds <= 0) isReadingPhase = false;
-
-  mainTimer.textContent = format(timeLeft);
-  updateDisplayHighlight();
+  if (rSec > 0) {
+    phase = 'reading';
+    timerLeft = rSec;
+  } else {
+    phase = 'writing';
+    timerLeft = wSec;
+  }
   
-  rBar.style.width = "100%";
-  wBar.style.left = "0";
-  wBar.style.width = "100%";
-  mainBtn.textContent = "▶ START EXAM";
-  mainBtn.className = "play";
+  mainTimer.textContent = format(timerLeft);
+  refreshUI();
 }
 
 function applyCustom() {
-  let r = parseFloat(document.getElementById('readIn').value) || 0;
-  let w = parseFloat(document.getElementById('writeIn').value) || 0;
+  const r = parseFloat(document.getElementById('readIn').value) || 0;
+  const w = parseFloat(document.getElementById('writeIn').value) || 0;
   setSession(r, w);
 }
 
-function updateDisplayHighlight() {
-  if (isReadingPhase) {
-    readBox.classList.add('active-phase');
-    writeBox.classList.remove('active-phase');
+function refreshUI() {
+  if (phase === 'reading') {
+    document.getElementById('readBox').classList.add('active-phase');
+    document.getElementById('writeBox').classList.remove('active-phase');
     phaseLabel.textContent = "Reading Phase";
+    rBar.style.display = "block";
   } else {
-    writeBox.classList.add('active-phase');
-    readBox.classList.remove('active-phase');
+    document.getElementById('writeBox').classList.add('active-phase');
+    document.getElementById('readBox').classList.remove('active-phase');
     phaseLabel.textContent = "Writing Phase";
+    rBar.style.display = "none";
   }
 }
 
 function handlePrimaryAction() {
-  if (isAlarming) {
+  if (alarming) {
     stopAlarm();
     return;
   }
   
-  // Enter Fullscreen on first start
-  if (!timerInterval && !isPaused) {
+  if (!interval) {
     if (document.documentElement.requestFullscreen) {
       document.documentElement.requestFullscreen().catch(() => {});
     }
-    startTimer();
-  } else if (!isPaused) {
-    pauseTimer();
+    start();
   } else {
-    resumeTimer();
+    pause();
   }
 }
 
-function startTimer() {
-  isPaused = false;
+function start() {
   mainBtn.textContent = "⏸ PAUSE";
   mainBtn.className = "pause";
-  updateDisplayHighlight();
-  timerInterval = setInterval(tick, 1000);
+  interval = setInterval(tick, 1000);
 }
 
-function pauseTimer() {
-  isPaused = true;
-  clearInterval(timerInterval);
-  timerInterval = null;
+function pause() {
+  clearInterval(interval);
+  interval = null;
   mainBtn.textContent = "▶ RESUME";
   mainBtn.className = "play";
 }
 
-function resumeTimer() {
-  startTimer();
-}
-
 function tick() {
-  if (timeLeft > 0) {
-    timeLeft--;
-    mainTimer.textContent = format(timeLeft);
-    updateBars();
-    if ([300, 120, 60].includes(timeLeft)) triggerFlashBurst();
-  } else {
-    if (isReadingPhase && writingSeconds > 0) {
-      triggerPhaseAlarm();
+  if (timerLeft > 0) {
+    timerLeft--;
+    mainTimer.textContent = format(timerLeft);
+    
+    // Progress Bar Logic
+    if (phase === 'reading') {
+      // Shrink right-to-left
+      rBar.style.width = (timerLeft / rSec * 100) + "%";
+      wBar.style.width = "100%";
     } else {
-      triggerFinalAlarm();
+      // Shrink left-to-right (pinned left, width decreases)
+      wBar.style.width = (timerLeft / wSec * 100) + "%";
+    }
+
+    // Interval Alerts
+    if ([300, 120, 60].includes(timerLeft)) {
+      document.body.classList.add('flash');
+      setTimeout(() => document.body.classList.remove('flash'), 1000);
+    }
+  } else {
+    if (phase === 'reading' && wSec > 0) {
+      // Automatic switch to writing
+      phase = 'writing';
+      timerLeft = wSec;
+      refreshUI();
+      mainTimer.textContent = format(timerLeft);
+      // Brief flash to signal transition
+      document.body.classList.add('flash');
+      setTimeout(() => document.body.classList.remove('flash'), 500);
+    } else {
+      finish();
     }
   }
 }
 
-function updateBars() {
-  if (isReadingPhase) {
-    let pc = (timeLeft / readingSeconds) * 100;
-    rBar.style.width = pc + "%";
-  } else {
-    let pc = (timeLeft / writingSeconds) * 100;
-    let spent = 100 - pc;
-    wBar.style.width = pc + "%";
-    wBar.style.left = spent + "%";
-  }
-}
-
-function triggerPhaseAlarm() {
-  clearInterval(timerInterval);
-  timerInterval = null;
-  isAlarming = true;
+function finish() {
+  clearInterval(interval);
+  interval = null;
+  alarming = true;
   document.body.classList.add('flash');
-  mainBtn.textContent = "🛑 START WRITING";
+  mainBtn.textContent = "🛑 STOP ";
   mainBtn.className = "alarm-btn";
-  phaseLabel.textContent = "Reading Finished";
-}
-
-function triggerFinalAlarm() {
-  clearInterval(timerInterval);
-  timerInterval = null;
-  isAlarming = true;
-  document.body.classList.add('flash');
-  mainBtn.textContent = "🛑 STOP TIMER";
-  mainBtn.className = "alarm-btn";
-  phaseLabel.textContent = "All Time Finished";
+  phaseLabel.textContent = "EXAM COMPLETE";
 }
 
 function stopAlarm() {
+  alarming = false;
   document.body.classList.remove('flash');
-  isAlarming = false;
-  if (isReadingPhase) {
-    isReadingPhase = false;
-    timeLeft = writingSeconds;
-    rBar.style.width = "0%";
-    startTimer();
-  } else {
-    resetTimer();
-  }
+  fullReset();
 }
 
-function triggerFlashBurst() {
-  document.body.classList.add('flash');
-  setTimeout(() => { if(!isAlarming) document.body.classList.remove('flash'); }, 1000);
+function fullReset() {
+  clearInterval(interval);
+  interval = null;
+  alarming = false;
+  document.body.classList.remove('flash');
+  mainBtn.textContent = "▶ START";
+  mainBtn.className = "play";
+  rBar.style.width = "100%";
+  wBar.style.width = "100%";
+  refreshUI();
 }
 
-function resetTimer() {
-  applyCustom();
-}
-
-// Default Init
+// Initial setup
 setSession(10, 90);
 </script>
 </body>
