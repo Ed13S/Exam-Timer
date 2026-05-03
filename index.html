@@ -26,32 +26,11 @@
     cursor: pointer;
   }
 
-  h1 { margin: 10px 0; }
-
   .timer {
     font-size: 76px;
     margin: 10px 0 20px;
   }
 
-  .container {
-    display: flex;
-    justify-content: center;
-    gap: 80px;
-    margin: 25px 0;
-  }
-
-  .box {
-    border: 2px solid #333;
-    padding: 25px;
-    width: 240px;
-    border-radius: 12px;
-    background: #161616;
-  }
-
-  .reading-title { border-bottom: 3px solid #2ecc71; }
-  .writing-title { border-bottom: 3px solid #3498db; }
-
-  /* BAR */
   #barContainer {
     width: 80%;
     height: 16px;
@@ -62,7 +41,6 @@
     position: relative;
   }
 
-  /* elapsed */
   #greyBar {
     position: absolute;
     right: 0;
@@ -72,7 +50,6 @@
     width: 0%;
   }
 
-  /* reading remaining */
   #readingBar {
     position: absolute;
     left: 0;
@@ -82,7 +59,6 @@
     width: 100%;
   }
 
-  /* writing remaining */
   #writingBar {
     position: absolute;
     right: 0;
@@ -94,58 +70,27 @@
 
   button {
     margin: 8px;
-    padding: 14px 22px;
-    font-size: 16px;
-    border-radius: 8px;
+    padding: 12px 20px;
     border: none;
+    border-radius: 8px;
     cursor: pointer;
   }
 
-  .play { background: #2ecc71; color: black; }
-  .stop { background: #e74c3c; color: white; }
+  .play { background:#2ecc71; }
+  .stop { background:#e74c3c; color:white; }
 
-  .input-grid {
-    display: flex;
-    justify-content: center;
-    gap: 140px;
-    margin-top: 40px;
+  .flash {
+    animation: flash 0.25s alternate 2;
   }
 
-  input {
-    padding: 14px;
-    width: 140px;
-    font-size: 16px;
-    border-radius: 8px;
-    border: none;
-    text-align: center;
-    background: #222;
-    color: white;
+  @keyframes flash {
+    0% { background:#111; }
+    100% { background:#8b0000; }
   }
 </style>
 </head>
 
 <body>
-
-<div id="topbar">
-  <div>Eddie Singh</div>
-  <div id="lock" onclick="toggleFullscreen()">
-    <img src="https://w0.peakpx.com/wallpaper/488/103/HD-wallpaper-locked-black-dont-edge-galaxy-lock-logo-phone-sad-white.jpg">
-  </div>
-</div>
-
-<h1>Exam Timer</h1>
-
-<div class="container">
-  <div class="box">
-    <h2><span class="reading-title">Reading</span></h2>
-    <p id="readingTime">00:00</p>
-  </div>
-
-  <div class="box">
-    <h2><span class="writing-title">Writing</span></h2>
-    <p id="writingTime">00:00</p>
-  </div>
-</div>
 
 <div class="timer" id="mainTimer">00:00</div>
 
@@ -155,155 +100,151 @@
   <div id="writingBar"></div>
 </div>
 
-<div>
-  <button onclick="selectSession(60,10)">60 + 10</button>
-  <button onclick="selectSession(50,5)">50 + 5</button>
-  <button onclick="selectSession(90,10)">90 + 10</button>
-</div>
-
-<button class="play" id="mainBtn" onclick="startPauseButton()">▶ Start</button>
+<button class="play" id="mainBtn" onclick="startPause()">Start</button>
 <button class="stop" onclick="stopTimer()">Stop</button>
-
-<div class="input-grid">
-  <div>
-    <h3>Reading (min)</h3>
-    <input id="readInput" type="number">
-  </div>
-
-  <div>
-    <h3>Writing (min)</h3>
-    <input id="writeInput" type="number">
-  </div>
-</div>
-
-<button onclick="applyCustom()">Apply</button>
 
 <script>
 
+/* ================= AUDIO ================= */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function beep(freq=800, time=0.15){
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  o.frequency.value = freq;
+  g.gain.value = 0.2;
+  o.start();
+  setTimeout(()=>o.stop(), time*1000);
+}
+
 /* ================= STATE ================= */
-let timer, endTime;
-let readingDuration = 0;
-let writingDuration = 0;
-let totalDuration = 0;
+let timer;
+let startTime;
+let endTime;
+let pauseOffset = 0;
+
+let reading = 90 * 60;
+let writing = 10 * 60;
+let total = reading + writing;
 
 let running = false;
 let paused = false;
-let remaining = 0;
 
-/* ================= HELPERS ================= */
-function toSec(m){ return Math.round(parseFloat(m||0)*60); }
+/* alerts */
+let a5=false, a2=false, a1=false;
 
-function format(s){
-  let m = Math.floor(s/60);
-  let sec = s % 60;
-  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+/* ================= CONTROL ================= */
+function startPause(){
+
+  if(!running){
+    start();
+  }
+  else if(!paused){
+    pause();
+  }
+  else {
+    resume();
+  }
 }
 
-/* ================= SESSION ================= */
-function selectSession(r, w){
-  readingDuration = toSec(r);
-  writingDuration = toSec(w);
-  totalDuration = readingDuration + writingDuration;
-
-  readingTime.textContent = format(readingDuration);
-  writingTime.textContent = format(writingDuration);
-
-  resetBars();
-}
-
-function applyCustom(){
-  selectSession(readInput.value, writeInput.value);
-}
-
-function resetBars(){
-  greyBar.style.width = "0%";
-  readingBar.style.width = "100%";
-  writingBar.style.width = "0%";
-}
-
-/* ================= TIMER ================= */
-function startPauseButton(){
-  if(!running) startTimer();
-  else if(!paused) pauseTimer();
-  else resumeTimer();
-}
-
-function startTimer(){
-  if(!readingDuration || !writingDuration) return;
-
+function start(){
   running = true;
   paused = false;
 
-  endTime = Date.now() + totalDuration * 1000;
+  startTime = Date.now();
+  endTime = startTime + total*1000;
 
-  mainBtn.textContent = "⏸ Pause";
+  mainBtn.textContent = "Pause";
 
-  timer = setInterval(update, 200);
+  timer = setInterval(update, 1000);
 }
 
-function pauseTimer(){
+function pause(){
   paused = true;
   clearInterval(timer);
-  remaining = endTime - Date.now();
+  pauseOffset = endTime - Date.now();
+  mainBtn.textContent = "Resume";
 }
 
-function resumeTimer(){
+function resume(){
   paused = false;
-  endTime = Date.now() + remaining;
-  timer = setInterval(update, 200);
+  endTime = Date.now() + pauseOffset;
+  timer = setInterval(update, 1000);
+  mainBtn.textContent = "Pause";
 }
 
 function stopTimer(){
-  running = false;
-  paused = false;
   clearInterval(timer);
+  running=false;
+  paused=false;
 
-  mainTimer.textContent = "00:00";
-  mainBtn.textContent = "▶ Start";
+  mainTimer.textContent="00:00";
+  mainBtn.textContent="Start";
 
   resetBars();
 }
 
-/* ================= UPDATE (FIXED PHASE LOGIC) ================= */
+function resetBars(){
+  greyBar.style.width="0%";
+  readingBar.style.width="100%";
+  writingBar.style.width="0%";
+}
+
+/* ================= CORE LOGIC ================= */
 function update(){
-  let left = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
-  let elapsed = totalDuration - left;
 
-  greyBar.style.width = (elapsed / totalDuration) * 100 + "%";
+  let left = Math.max(0, Math.floor((endTime - Date.now())/1000));
+  let elapsed = total - left;
 
-  /* ========== READING PHASE ========== */
-  if(left > writingDuration){
-    let readingLeft = left - writingDuration;
+  greyBar.style.width = (elapsed/total)*100 + "%";
+
+  /* ===== PHASE SPLIT ===== */
+  if(left > writing){
+
+    let readingLeft = left - writing;
 
     mainTimer.textContent = format(readingLeft);
 
-    readingBar.style.width = (readingLeft / readingDuration) * 100 + "%";
+    readingBar.style.width = (readingLeft/reading)*100 + "%";
     writingBar.style.width = "0%";
   }
-
-  /* ========== WRITING PHASE ========== */
   else {
-    let writingLeft = left;
 
-    mainTimer.textContent = format(writingLeft);
+    mainTimer.textContent = format(left);
 
     readingBar.style.width = "0%";
-    writingBar.style.width = (writingLeft / writingDuration) * 100 + "%";
+    writingBar.style.width = (left/writing)*100 + "%";
   }
 
-  if(left <= 0){
+  /* ===== ALERTS ===== */
+  if(left<=300 && !a5){ a5=true; flash(5); }
+  if(left<=120 && !a2){ a2=true; flash(2); }
+  if(left<=60 && !a1){ a1=true; flash(1); }
+
+  if(left<=0){
     clearInterval(timer);
-    mainTimer.textContent = "00:00";
+    mainTimer.textContent="00:00";
   }
 }
 
-/* ================= FULLSCREEN ================= */
-function toggleFullscreen(){
-  if(!document.fullscreenElement){
-    document.documentElement.requestFullscreen();
-  } else {
-    document.exitFullscreen();
-  }
+/* ================= FLASH ================= */
+function flash(n){
+  document.body.classList.add("flash");
+  beep(900);
+  setTimeout(()=>document.body.classList.remove("flash"),300);
+}
+
+/* ================= FORMAT ================= */
+function format(s){
+  let m=Math.floor(s/60);
+  let r=s%60;
+  return String(m).padStart(2,'0')+":"+String(r).padStart(2,'0');
+}
+
+/* ================= BUTTON FIX ================= */
+function startPause(){
+  startPause(); // alias safety
 }
 
 </script>
