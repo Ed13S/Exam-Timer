@@ -51,38 +51,52 @@
   .reading-title { border-bottom: 3px solid #2ecc71; }
   .writing-title { border-bottom: 3px solid #3498db; }
 
-  /* ===== BAR ===== */
+  /* ================= BAR ================= */
   #barContainer {
     width: 80%;
     height: 16px;
     margin: 20px auto;
-    background: #444; /* grey = time passed */
+    background: #222; /* base = remaining background */
     border-radius: 8px;
     overflow: hidden;
     position: relative;
   }
 
+  /* grey = elapsed time */
+  #greyBar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: #444;
+    width: 0%;
+    z-index: 1;
+  }
+
+  /* reading (green) */
   #readingBar {
     position: absolute;
     left: 0;
     top: 0;
     height: 100%;
     background: #2ecc71;
-    transform-origin: right;
     width: 100%;
+    transform-origin: right;
+    z-index: 3;
   }
 
+  /* writing (blue) */
   #writingBar {
     position: absolute;
-    left: 0;
+    right: 0;
     top: 0;
     height: 100%;
     background: #3498db;
-    transform-origin: left;
     width: 0%;
+    transform-origin: left;
+    z-index: 4;
   }
 
-  /* BUTTONS */
   button {
     margin: 8px;
     padding: 14px 22px;
@@ -95,7 +109,6 @@
   .play { background: #2ecc71; color: black; }
   .stop { background: #e74c3c; color: white; }
 
-  /* INPUTS */
   .input-grid {
     display: flex;
     justify-content: center;
@@ -114,7 +127,6 @@
     color: white;
   }
 
-  /* FLASH */
   .flash {
     animation: flash 0.25s alternate 2;
   }
@@ -153,6 +165,7 @@
 
 <!-- BAR -->
 <div id="barContainer">
+  <div id="greyBar"></div>
   <div id="readingBar"></div>
   <div id="writingBar"></div>
 </div>
@@ -201,10 +214,18 @@ function selectSession(r, w){
 
   readingTime.textContent = format(readingDuration);
   writingTime.textContent = format(writingDuration);
+
+  resetBars();
 }
 
 function applyCustom(){
   selectSession(readInput.value, writeInput.value);
+}
+
+function resetBars(){
+  greyBar.style.width = "0%";
+  readingBar.style.width = "100%";
+  writingBar.style.width = "0%";
 }
 
 function startPauseButton(){
@@ -222,7 +243,7 @@ function startPauseButton(){
 function startTimer(){
   if(!readingDuration || !writingDuration) return;
 
-  // ✅ FULLSCREEN ON START
+  // ✅ FULLSCREEN START
   document.documentElement.requestFullscreen?.();
 
   running = true;
@@ -255,38 +276,33 @@ function stopTimer(){
   mainTimer.textContent = "00:00";
   mainBtn.textContent = "▶ Start";
 
-  readingBar.style.width = "100%";
-  writingBar.style.width = "0%";
+  resetBars();
 }
 
 function update(){
   let left = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+  let elapsed = totalDuration - left;
+
   mainTimer.textContent = format(left);
 
-  let elapsed = totalDuration - left;
-  let elapsedPct = (elapsed / totalDuration) * 100;
+  // GREY (elapsed grows left → right)
+  greyBar.style.width = (elapsed / totalDuration) * 100 + "%";
 
-  // ---- PHASE CONTROL ----
+  // READING PHASE
   if(left > writingDuration){
-    // reading phase
     let readingLeft = left - writingDuration;
-    let pct = (readingLeft / readingDuration) * 100;
-
-    readingBar.style.width = pct + "%";
+    readingBar.style.width = (readingLeft / readingDuration) * 100 + "%";
     writingBar.style.width = "0%";
-  } else {
-    // writing phase
+  }
+
+  // WRITING PHASE
+  else {
     readingBar.style.width = "0%";
-
-    let writingLeft = left;
-    let pct = (writingLeft / writingDuration) * 100;
-
-    writingBar.style.width = pct + "%";
+    writingBar.style.width = (left / writingDuration) * 100 + "%";
   }
 
   if(left <= 0){
     clearInterval(timer);
-    mainTimer.textContent = "00:00";
   }
 }
 
