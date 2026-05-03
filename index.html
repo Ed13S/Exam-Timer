@@ -156,7 +156,7 @@
   <div id="clockDisplay"></div>
 </div>
 
-<h1>Timer</h1>
+<h1>Exam Timer</h1>
 
 <div class="container">
   <div id="readBox" class="box">
@@ -245,12 +245,12 @@ function refreshUI() {
   if (phase === 'reading') {
     document.getElementById('readBox').classList.add('active-phase');
     document.getElementById('writeBox').classList.remove('active-phase');
-    phaseLabel.textContent = "Reading Phase";
+    phaseLabel.textContent = "Reading Time";
     rBar.style.display = "block";
   } else {
     document.getElementById('writeBox').classList.add('active-phase');
     document.getElementById('readBox').classList.remove('active-phase');
-    phaseLabel.textContent = "Writing Phase";
+    phaseLabel.textContent = "Writing Time";
     rBar.style.display = "none";
   }
 }
