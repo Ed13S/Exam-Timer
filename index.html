@@ -40,6 +40,15 @@
     font-family: monospace; /* Font style reverted as requested */
   }
 
+  .finish-time {
+    font-size: 1.3rem;
+    color: #aaa;
+    margin-top: -10px;
+    letter-spacing: 1px;
+  }
+
+  .finish-time strong { color: #fff; }
+
   .container {
     display: flex;
     justify-content: center;
@@ -171,6 +180,7 @@
 
 <div id="phaseLabel" class="timer-label">Ready</div>
 <div class="timer" id="mainTimer">00:00</div>
+<div id="finishDisplay" class="finish-time"></div>
 
 <div id="barContainer">
   <div id="writingBar"></div>
@@ -178,11 +188,11 @@
 </div>
 
 <div class="controls">
-  <button onclick="setSession(10, 90)">10 + 90</button>
+  <button onclick="setSession(15, 90)">15 + 90</button>
   <button onclick="setSession(5, 50)">5 + 50</button>
   <button onclick="setSession(15, 120)">15 + 120</button>
   <br><br>
-  Reading: <input type="number" id="readIn" value="10">
+  Reading: <input type="number" id="readIn" value="15">
   Writing: <input type="number" id="writeIn" value="90">
   <button onclick="applyCustom()">Set Custom</button>
   <br><br>
@@ -203,8 +213,23 @@ const phaseLabel = document.getElementById('phaseLabel');
 const rBar = document.getElementById('readingBar');
 const wBar = document.getElementById('writingBar');
 
+function updateFinish() {
+  const el = document.getElementById('finishDisplay');
+  if (alarming || (rSec === 0 && wSec === 0)) {
+    el.textContent = '';
+    return;
+  }
+  // Time left in the current phase, plus all of writing time if still reading
+  const remaining = timerLeft + (phase === 'reading' ? wSec : 0);
+  const end = new Date(Date.now() + remaining * 1000);
+  const t = end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const label = interval ? 'Expected finish' : 'Finish if started now';
+  el.innerHTML = `${label}: <strong>${t}</strong>`;
+}
+
 function updateClock() {
   document.getElementById('clockDisplay').textContent = new Date().toLocaleTimeString();
+  updateFinish();
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -341,7 +366,7 @@ function fullReset() {
   refreshUI();
 }
 
-setSession(10, 90);
+setSession(15, 90);
 </script>
 </body>
 </html>
